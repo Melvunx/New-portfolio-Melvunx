@@ -1,5 +1,13 @@
+import Home from "@pages/Home";
+import { Route, Routes } from "react-router-dom";
+
 function App() {
-  return <h1 className="text-ellipsis bg-red-200"></h1>;
+  return (
+    <Routes>
+      <Route path="/home" element={<Home />} />
+      <Route path="*" element={<Home />} />
+    </Routes>
+  );
 }
 
 export default App;
