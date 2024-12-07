@@ -38,6 +38,23 @@ app.use(
 // app.use(passport.initialize())
 // app.use(passport.session())
 
+// Routes
+const authRoutes = require("@routes/auth.routes");
+const aboutMeRoutes = require("./routes/aboutMe.routes");
+const emailingRoutes = require("./routes/emailing.routes");
+const experienceRoutes = require("./routes/experience.routes");
+const formationRoutes = require("./routes/formation.routes");
+const projectRoutes = require("./routes/project.routes");
+const reactionRoutes = require("./routes/reaction.routes");
+
+app.use("/api/auth", authRoutes);
+app.use("/api/about-me", aboutMeRoutes);
+app.use("/api/emailing", emailingRoutes);
+app.use("/api/experience", experienceRoutes);
+app.use("/api/formation", formationRoutes);
+app.use("/api/project", projectRoutes);
+app.use("/api/reacion", reactionRoutes);
+
 pool
   .query("SELECT 1")
   .then(() => {
