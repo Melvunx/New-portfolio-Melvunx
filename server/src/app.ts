@@ -1,24 +1,16 @@
+import pool from "@config/database";
+import colors from "@models/colors.models";
 import cookieParser from "cookie-parser";
 import express from "express";
 import session from "express-session";
-import pool from "./config/database";
 // import passport from "./strategies/local-strategiy";
 const bodyParser = require("body-parser");
-const colors = require("@colors/colors");
 const cors = require("cors");
 const app = express();
 
 require("dotenv").config();
 const { PORT, SECRET_SESSION } = process.env;
 const oneHour = 60 * 60 * 1000;
-
-colors.setTheme({
-  success: "brightGreen",
-  info: "cyan",
-  data: ["gray", "italic"],
-  warn: "brightYellow",
-  error: ["red", "bgWhite"],
-});
 
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -40,12 +32,12 @@ app.use(
 
 // Routes
 const authRoutes = require("@routes/auth.routes");
-const aboutMeRoutes = require("./routes/aboutMe.routes");
-const emailingRoutes = require("./routes/emailing.routes");
-const experienceRoutes = require("./routes/experience.routes");
-const formationRoutes = require("./routes/formation.routes");
-const projectRoutes = require("./routes/project.routes");
-const reactionRoutes = require("./routes/reaction.routes");
+const aboutMeRoutes = require("@routes/aboutMe.routes");
+const emailingRoutes = require("@routes/emailing.routes");
+const experienceRoutes = require("@routes/experience.routes");
+const formationRoutes = require("@routes/formation.routes");
+const projectRoutes = require("@routes/project.routes");
+const reactionRoutes = require("@routes/reaction.routes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/about-me", aboutMeRoutes);
@@ -68,7 +60,7 @@ pool
   })
   .catch((error) =>
     console.log(
-      colors.error({ message: `Error to connect to the database`, error })
+      colors.error({ message: "Error to connect to the database", error })
     )
   );
 
