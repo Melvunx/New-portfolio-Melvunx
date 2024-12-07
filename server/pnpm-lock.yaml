@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@colors/colors':
+        specifier: ^1.6.0
+        version: 1.6.0
       '@faker-js/faker':
         specifier: ^9.3.0
         version: 9.3.0
@@ -80,6 +83,10 @@ importers:
         version: 5.7.2
 
 packages:
+
+  '@colors/colors@1.6.0':
+    resolution: {integrity: sha512-Ir+AOibqzrIsL6ajt3Rz3LskB7OiMVHqltZmspbW/TJuTVuyOMirVqAkjfY6JISiLHgyNqicAC8AyHHGzNd/dA==}
+    engines: {node: '>=0.1.90'}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -885,6 +892,8 @@ packages:
     engines: {node: '>=6'}
 
 snapshots:
+
+  '@colors/colors@1.6.0': {}
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
