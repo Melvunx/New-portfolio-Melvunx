@@ -1,10 +1,12 @@
 import { Router } from "express";
 const router = Router();
 
-router.get("/", (req, res) => {
-  // console.log(colors.info("test"));
+router.post("/register");
 
-  res.send("Hello about");
-});
+router.post("/login");
+
+router.post("/logout");
+
+router.get("/user");
 
 module.exports = router;
