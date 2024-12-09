@@ -1,4 +1,4 @@
-export interface Account extends ReactionLog {
+export interface Account {
   id: number;
   username: string;
   email: string;
@@ -6,6 +6,7 @@ export interface Account extends ReactionLog {
   name: string;
   lastname: string;
   cretedAt: Date;
+  lastlogin: Date;
   role_id: number;
 }
 

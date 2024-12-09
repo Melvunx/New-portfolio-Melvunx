@@ -1,14 +1,14 @@
+require("dotenv").config();
 import pool from "@config/database";
 import colors from "@models/colors.models";
 import cookieParser from "cookie-parser";
 import express from "express";
 import session from "express-session";
-// import passport from "./strategies/local-strategiy";
+import passport from "./strategies/local-strategy";
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const app = express();
 
-require("dotenv").config();
 const { PORT, SECRET_SESSION } = process.env;
 const oneHour = 60 * 60 * 1000;
 
@@ -27,8 +27,8 @@ app.use(
   })
 );
 
-// app.use(passport.initialize())
-// app.use(passport.session())
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Routes
 const authRoutes = require("@routes/auth.routes");
