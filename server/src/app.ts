@@ -1,11 +1,11 @@
 require("dotenv").config();
 import colors from "@/schema/colors.schema";
 import pool from "@config/database";
+import passport from "@strategies/google-strategy";
 import cookieParser from "cookie-parser";
 import express from "express";
 import MySQLStoreFactory from "express-mysql-session";
 import * as session from "express-session";
-import passport from "./strategies/local-strategy";
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const app = express();
@@ -95,3 +95,13 @@ app.get("/", (req, res) => {
   console.log(colors.info(session, sessionID));
   res.send("Hello World!");
 });
+
+app.get("/api/auth/google", passport.authenticate("google"));
+
+app.get(
+  "/api/auth/google/callback",
+  passport.authenticate("google"),
+  (req, res) => {
+    res.sendStatus(200);
+  }
+);
