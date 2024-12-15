@@ -1,6 +1,6 @@
 require("dotenv").config();
+import colors from "@/schema/colors.schema";
 import pool from "@config/database";
-import colors from "@models/colors.models";
 import cookieParser from "cookie-parser";
 import express from "express";
 import session from "express-session";

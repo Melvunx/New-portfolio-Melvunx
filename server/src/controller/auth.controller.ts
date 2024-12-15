@@ -1,6 +1,6 @@
-import colors from "@/models/colors.models";
+import { Account } from "@/schema/account.schema";
+import colors from "@/schema/colors.schema";
 import pool from "@config/database";
-import { Account } from "@models/account.models";
 import passport from "@strategies/local-strategy";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
 import {

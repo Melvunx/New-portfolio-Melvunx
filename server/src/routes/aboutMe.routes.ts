@@ -1,4 +1,4 @@
-import colors from "@models/colors.models";
+import colors from "@/schema/colors.schema";
 import { Router } from "express";
 
 const router = Router();

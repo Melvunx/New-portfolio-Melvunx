@@ -1,5 +1,5 @@
-import colors from "@/models/colors.models";
-import { Account } from "@models/account.models";
+import { Account } from "@/schema/account.schema";
+import colors from "@/schema/colors.schema";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
 import { RequestHandler } from "express";
 

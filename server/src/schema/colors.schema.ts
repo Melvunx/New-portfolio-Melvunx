@@ -1,14 +1,17 @@
 import { Color } from "@colors/colors";
+import { z } from "zod";
 
 const colors: TerminalColor = require("@colors/colors");
 
-type Theme = {
-  success: string;
-  info: string;
-  data: string[];
-  warn: string;
-  error: string[];
-};
+const ThemaSchema = z.object({
+  success: z.string(),
+  info: z.string(),
+  data: z.array(z.string()),
+  warn: z.string(),
+  error: z.array(z.string()),
+});
+
+type Theme = z.infer<typeof ThemaSchema>;
 
 interface TerminalColor extends Color {
   setTheme: (theme: Theme) => void;

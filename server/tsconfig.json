@@ -33,7 +33,7 @@
       "@/*": ["./src/*"],
       "@config/*": ["./src/config/*"],
       "@controller/*": ["./src/controller/*"],
-      "@models/*": ["./src/models/*"],
+      "@schema/*": ["src/schema/*"],
       "@routes/*": ["./src/routes/*"],
       "@strategies/*": ["./src/strategies/*"],
       "@middleware/*": ["./src/middleware/*"],

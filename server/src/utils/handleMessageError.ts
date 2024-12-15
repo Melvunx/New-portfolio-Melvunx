@@ -1,4 +1,4 @@
-import colors from "@/models/colors.models";
+import colors from "@/schema/colors.schema";
 
 export const handleError = (error?: any, detail?: string) => {
   return {

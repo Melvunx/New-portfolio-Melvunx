@@ -1,6 +1,6 @@
-import colors from "@/models/colors.models";
+import { Account } from "@/schema/account.schema";
+import colors from "@/schema/colors.schema";
 import pool from "@config/database";
-import { Account } from "@models/account.models";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
 import bcrypt from "bcrypt";
 import { RowDataPacket } from "mysql2";
