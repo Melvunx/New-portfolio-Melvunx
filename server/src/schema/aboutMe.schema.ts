@@ -27,6 +27,7 @@ export const FormationSchema = z.object({
   level: z.string(),
   start_date: z.date(),
   end_date: z.date(),
+  reaction_target_id: z.string(),
   address_id: z.number(),
 });
 
@@ -49,6 +50,7 @@ export const ExperienceSchema = z.object({
   title: z.string(),
   task: z.string(),
   skills: z.string(),
+  reaction_target_id: z.string(),
   address_id: z.number(),
 });
 

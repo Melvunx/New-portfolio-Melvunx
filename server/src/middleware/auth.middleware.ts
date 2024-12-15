@@ -1,5 +1,6 @@
 import { Account } from "@/schema/account.schema";
 import colors from "@/schema/colors.schema";
+import { handleSuccess } from "@/utils/handleMessageSuccess";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
 import { RequestHandler } from "express";
 
@@ -23,6 +24,22 @@ export const userAuthentification: RequestHandler = (req, res, next) => {
     return;
   }
   console.log(colors.info(`User ${user.username} is authentificated`));
+  req.sessionStore.get(req.sessionID, (error, sessionData) => {
+    if (error) {
+      loggedHandleError("Error while getting session data");
+      res
+        .status(500)
+        .send(
+          handleError(
+            "Error while getting session data",
+            "Internal server error"
+          )
+        );
+    }
+    console.log(
+      handleSuccess(`Inside the ${user.username}'s session data`, sessionData)
+    );
+  });
   res.status(200);
   next();
 };

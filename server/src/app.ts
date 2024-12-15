@@ -3,24 +3,50 @@ import colors from "@/schema/colors.schema";
 import pool from "@config/database";
 import cookieParser from "cookie-parser";
 import express from "express";
-import session from "express-session";
+import MySQLStoreFactory from "express-mysql-session";
+import * as session from "express-session";
 import passport from "./strategies/local-strategy";
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const app = express();
 
-const { PORT, SECRET_SESSION } = process.env;
+const {
+  PORT,
+  SECRET_SESSION,
+  DATABASE_HOST,
+  DATABASE_USER,
+  DATABASE_PASSWORD,
+  DATABASE_NAME,
+} = process.env;
 const oneHour = 60 * 60 * 1000;
+
+const MySQLStore = MySQLStoreFactory(session);
+
+const sessionStore = new MySQLStore({
+  host: DATABASE_HOST,
+  user: DATABASE_USER,
+  password: DATABASE_PASSWORD,
+  database: DATABASE_NAME,
+  schema: {
+    tableName: "sessions",
+    columnNames: {
+      session_id: "session_id",
+      expires: "expires_date",
+      data: "session_data",
+    },
+  },
+});
 
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 app.use(
-  session({
+  session.default({
     secret: SECRET_SESSION || "Melvunx",
     saveUninitialized: false,
     resave: false,
+    store: sessionStore,
     cookie: {
       maxAge: oneHour,
     },
