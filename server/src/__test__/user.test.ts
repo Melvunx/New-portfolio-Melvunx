@@ -1,4 +1,4 @@
-import { getUserProfile } from "@/controller/user.controller";
+import { getUserProfile } from "@controller/user.controller";
 import { Request, Response } from "express";
 
 const mockRequest = {
@@ -23,6 +23,13 @@ const mockNext = () => {};
 describe("get user profile", () => {
   it("should return user profile", async () => {
     getUserProfile(mockRequest, mockResponse, mockNext);
-
+    expect(mockResponse.send)!.toBeCalledWith({
+      id: 1,
+      username: "testUser",
+      name: "test",
+      lastname: "testln",
+      email: "test@example.com",
+      role_id: 1,
+    });
   });
 });

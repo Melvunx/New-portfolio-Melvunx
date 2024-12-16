@@ -1,4 +1,4 @@
-import colors from "@/schema/colors.schema";
+import colors from "@schema/colors.schema";
 
 export const handleSuccess = (detail?: string, data?: any) => {
   return {
