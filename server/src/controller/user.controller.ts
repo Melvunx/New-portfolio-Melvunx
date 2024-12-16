@@ -10,7 +10,7 @@ import { RowDataPacket } from "mysql2";
 
 const { SELECT_USER_ID } = process.env;
 
-export const getUser: RequestHandler = async (req, res) => {
+export const getUserProfile: RequestHandler = async (req, res) => {
   const user: Account = req.cookies.userCookie;
 
   if (!user) {

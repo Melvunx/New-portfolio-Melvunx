@@ -1,7 +1,7 @@
-import { getUser } from "@controller/user.controller";
+import { getUserProfile } from "@controller/user.controller";
 import { Router } from "express";
 const router = Router();
 
-router.get("/profile", getUser);
+router.get("/profile", getUserProfile);
 
 module.exports = router;
