@@ -46,13 +46,13 @@ passport.use(
 
         console.log("Email checking...");
 
-        const ExistingGoogleAccount = await pool.query<
+        const [ExistingGoogleAccount] = await pool.query<
           RowDataPacket[] & Account[]
         >(CHECK_GOOGLE_EMAIL, [email]);
 
-        const googleAccount = ExistingGoogleAccount[0][0];
-        if (ExistingGoogleAccount[0].length > 0) {
-          console.log(`Account found ! Hello ${googleAccount.username}`);
+        const googleAccount = ExistingGoogleAccount[0];
+        if (ExistingGoogleAccount.length > 0) {
+          console.log(`Account found ! Hello ${googleAccount.username} !`);
           return done(null, googleAccount);
         }
 

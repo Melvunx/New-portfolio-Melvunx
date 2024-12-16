@@ -86,6 +86,7 @@ passport.deserializeUser(async (id: number, done) => {
 
 // Routes
 const authRoutes = require("@routes/auth.routes");
+const userRoutes = require("@routes/user.routes");
 const aboutMeRoutes = require("@routes/aboutMe.routes");
 const emailingRoutes = require("@routes/emailing.routes");
 const experienceRoutes = require("@routes/experience.routes");
@@ -94,6 +95,7 @@ const projectRoutes = require("@routes/project.routes");
 const reactionRoutes = require("@routes/reaction.routes");
 
 app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
 app.use("/api/about-me", aboutMeRoutes);
 app.use("/api/emailing", emailingRoutes);
 app.use("/api/experience", experienceRoutes);

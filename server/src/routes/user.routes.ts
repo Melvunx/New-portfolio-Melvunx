@@ -1,6 +1,7 @@
+import { getUser } from "@controller/user.controller";
 import { Router } from "express";
 const router = Router();
 
 router.get("/profile", getUser);
 
-export default router;
+module.exports = router;
