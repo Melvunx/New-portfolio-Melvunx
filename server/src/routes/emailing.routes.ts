@@ -1,10 +1,15 @@
+import {
+  adminAuthentification,
+  userAuthentification,
+} from "@/middleware/auth.middleware";
 import { Router } from "express";
 const router = Router();
 
-router.get("/", (req, res) => {
-  // console.log(colors.info("test"));
+// Get all messages
+router.get("/senders", userAuthentification, adminAuthentification, getAllSenders);
 
-  res.send("Hello about");
-});
+// Post messages
+router.post("/new-email", postEmail)
+
 
 module.exports = router;
