@@ -8,6 +8,8 @@ export const ProjectSchema = z.object({
   reaction_target_id: z.string(),
   production_url: z.string(),
   github_url: z.string(),
+  image_url: z.string().optional(),
+  video_url: z.string().optional(),
   createdAt: z.date(),
 });
 

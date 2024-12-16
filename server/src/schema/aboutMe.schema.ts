@@ -15,6 +15,7 @@ export const AboutMeSchema = z.object({
   linkedIn_url: z.string(),
   introduction_text: z.string(),
   github_url: z.string(),
+  avatar_url: z.string(),
   ongoing_formation_id: z.number(),
 });
 

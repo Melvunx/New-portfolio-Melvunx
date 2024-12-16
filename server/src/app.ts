@@ -121,7 +121,5 @@ pool
   );
 
 app.get("/", (req, res) => {
-  const { session, sessionID } = req;
-  console.log(colors.info(session, sessionID));
   res.send("Hello World!");
 });

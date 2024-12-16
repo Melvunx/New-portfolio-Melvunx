@@ -17,5 +17,6 @@ module.exports = {
     "@schema/(.*)": "<rootDir>/src/schema/$1",
     "@routes/(.*)": "<rootDir>/src/routes/$1",
     "@middleware/(.*)": "<rootDir>/src/middleware/$1",
+    "@strategies/(.*)": "<rootDir>/src/strategies/$1",
   },
 };

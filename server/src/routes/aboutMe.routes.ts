@@ -1,12 +1,8 @@
-import colors from "@/schema/colors.schema";
+import { getInfoAboutMe } from "@/controller/aboutMe.controller";
 import { Router } from "express";
 
 const router = Router();
 
-router.get("/", (req, res) => {
-  console.log(colors.error("test"));
-
-  res.send("Hello about");
-});
+router.get("/", getInfoAboutMe);
 
 module.exports = router;
