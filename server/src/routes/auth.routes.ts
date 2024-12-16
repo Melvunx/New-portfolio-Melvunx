@@ -15,6 +15,10 @@ router.post("/register", accountRegister);
 
 router.post("/login", passportLogin);
 
+router.get("/google", googleLogin);
+
+router.get("/google/callback");
+
 router.post("/logout", passportLogout);
 
 router.get(

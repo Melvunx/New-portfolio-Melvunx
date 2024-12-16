@@ -184,3 +184,7 @@ export const adminUserController: RequestHandler = async (req, res) => {
     return;
   }
 };
+
+export const googleLogin: RequestHandler = (req, res) => {
+  passport
+}
