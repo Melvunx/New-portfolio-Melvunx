@@ -7,7 +7,7 @@ import { RowDataPacket } from "mysql2";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 
-const { CHECK_LOGIN, UPDATE_LASTLOGIN, SELECT_USER_ID } = process.env;
+const { CHECK_LOGIN, UPDATE_LASTLOGIN } = process.env;
 
 passport.use(
   "local",

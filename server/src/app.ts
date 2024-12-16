@@ -123,13 +123,3 @@ app.get("/", (req, res) => {
   console.log(colors.info(session, sessionID));
   res.send("Hello World!");
 });
-
-app.get("/api/auth/google", passport.authenticate("google"));
-
-app.get(
-  "/api/auth/google/callback",
-  passport.authenticate("google"),
-  (req, res) => {
-    res.sendStatus(200);
-  }
-);

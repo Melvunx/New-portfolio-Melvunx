@@ -2,11 +2,13 @@ import { Account } from "@/schema/account.schema";
 import colors from "@/schema/colors.schema";
 import { handleSuccess } from "@/utils/handleMessageSuccess";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
+import { log } from "console";
 import { RequestHandler } from "express";
 
 export const userAuthentification: RequestHandler = (req, res, next) => {
   const user: Account = req.cookies.userCookie;
   console.log("Authentification in progress...");
+  log("user cookie", user);
   if (!user) {
     loggedHandleError("User not found or session expired");
     res

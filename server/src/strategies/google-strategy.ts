@@ -15,7 +15,8 @@ const {
   UPDATE_LASTLOGIN,
 } = process.env;
 
-passport.use("google",
+passport.use(
+  "google",
   new GoogleStrategy(
     {
       clientID: GOOGLE_CLIENT_ID || "",
@@ -43,12 +44,19 @@ passport.use("google",
             null
           );
 
+        console.log("Email checking...");
+
         const ExistingGoogleAccount = await pool.query<
           RowDataPacket[] & Account[]
         >(CHECK_GOOGLE_EMAIL, [email]);
 
-        if (ExistingGoogleAccount.length > 0)
-          return done(null, ExistingGoogleAccount[0]);
+        const googleAccount = ExistingGoogleAccount[0][0];
+        if (ExistingGoogleAccount[0].length > 0) {
+          console.log(`Account found ! Hello ${googleAccount.username}`);
+          return done(null, googleAccount);
+        }
+
+        console.log("Email not found... Creation new account...");
 
         const newGoogleAccount = await pool.query<
           RowDataPacket[] & OkPacketParams & Account
@@ -65,9 +73,7 @@ passport.use("google",
 
         await pool.query(UPDATE_LASTLOGIN, [newUserId]);
 
-        console.log(
-          colors.info(`User ${newGoogleAccount[0].name} is authentificated !`)
-        );
+        console.log(colors.info(`New User created! Welcome ${given_name}`));
         return done(null, {
           id: newUserId,
           username: `user_${id}`,

@@ -1,7 +1,8 @@
 import { Account } from "@/schema/account.schema";
 import colors from "@/schema/colors.schema";
 import pool from "@config/database";
-import passport from "@strategies/local-strategy";
+import "@strategies/google-strategy";
+import "@strategies/local-strategy";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
 import {
   handleSuccess,
@@ -10,6 +11,7 @@ import {
 import bcrypt from "bcrypt";
 import { RequestHandler } from "express";
 import { RowDataPacket } from "mysql2";
+import passport from "passport";
 
 const {
   CREATE_NEW_ACCOUNT,
@@ -185,6 +187,25 @@ export const adminUserController: RequestHandler = async (req, res) => {
   }
 };
 
-export const googleLogin: RequestHandler = (req, res) => {
-  passport
-}
+export const googleLogin: RequestHandler = (req, res, next) => {
+  passport.authenticate(
+    "google",
+    (
+      error: string,
+      user: Account,
+      info: { success: boolean; message: string; error: any }
+    ) => {
+      if (error) return res.status(500).send(info);
+      if (!user) return res.status(401).send(info);
+
+      req.logIn(user, (loginErr) => {
+        if (loginErr)
+          return res.status(500).send(handleError(loginErr, "Error on login"));
+
+        res.cookie("userCookie", user, { maxAge: 360000 });
+
+        return res.status(200).json(handleSuccess("Loggin successful", user));
+      });
+    }
+  )(req, res, next);
+};
