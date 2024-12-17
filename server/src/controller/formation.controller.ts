@@ -1,4 +1,4 @@
-
+import { Formation } from "@/schema/aboutMe.schema";
 import {
   handleSuccess,
   loggedHandleSuccess,
