@@ -2,7 +2,13 @@ import {
   adminAuthentification,
   userAuthentification,
 } from "@/middleware/auth.middleware";
-import { getProjectId, getProjects } from "@controller/project.controller";
+import {
+  createNewProject,
+  deleteProject,
+  getProjectId,
+  getProjects,
+  projectModifier,
+} from "@controller/project.controller";
 import { Router } from "express";
 const router = Router();
 
