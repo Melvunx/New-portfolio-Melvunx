@@ -14,7 +14,7 @@ export const getFormations: RequestHandler = async (req, res) => {
   try {
     if (!GET_FORMATION) {
       res
-        .status(400)
+        .status(500)
         .send(handleError(new Error("Sql request is not defined")));
       return;
     }
@@ -37,7 +37,7 @@ export const getFormationId: RequestHandler = async (req, res) => {
 
     if (!GET_FORMATION_ID) {
       res
-        .status(400)
+        .status(500)
         .send(handleError(new Error("Sql request is not defined")));
       return;
     } else if (!id) {

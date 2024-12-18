@@ -14,7 +14,7 @@ export const getProjects: RequestHandler = async (req, res) => {
   try {
     if (!GET_PROJECTS) {
       res
-        .status(400)
+        .status(500)
         .send(handleError(new Error("Sql request is not defined")));
       return;
     }
@@ -38,7 +38,7 @@ export const getProjectId: RequestHandler = async (req, res) => {
 
     if (!GET_PROJECT_ID) {
       res
-        .status(400)
+        .status(500)
         .send(
           handleError(
             new Error("Sql request is not defined"),

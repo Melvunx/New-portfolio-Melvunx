@@ -35,7 +35,7 @@ export const accountRegister: RequestHandler<{}, {}, Account> = async (
   const { username, email, password, name, lastname } = req.body;
 
   if (!CREATE_NEW_ACCOUNT || !CHECK_USERNAME || !CHECK_EMAIL) {
-    res.status(400).send(handleError("Sql request not defined"));
+    res.status(500).send(handleError("Sql request not defined"));
     return;
   } else if (!username || !email || !password || !name || !lastname) {
     res.status(400).send(handleError("Missing fields"));
@@ -167,7 +167,7 @@ export const adminUserController: RequestHandler = async (req, res) => {
   const user: Account = req.cookies.userCookie;
 
   if (!SELECT_ALL_USERS) {
-    res.status(400).send(handleError("Sql request not defined"));
+    res.status(500).send(handleError("Sql request not defined"));
     return;
   } else if (!user) {
     res.status(401).send(handleError("User not found or session expired"));

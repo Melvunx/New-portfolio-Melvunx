@@ -24,7 +24,7 @@ export const getUserProfile: RequestHandler = async (req, res) => {
       );
     return;
   } else if (!SELECT_USER_ID) {
-    res.status(400).send(handleError("Sql request not defined"));
+    res.status(500).send(handleError("Sql request not defined"));
     return;
   }
 
