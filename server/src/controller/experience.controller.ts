@@ -11,7 +11,7 @@ import { loggedHandleError } from "../utils/handleMessageError";
 
 const { GET_EXPERIENCES, GET_EXPERIENCE_ID } = process.env;
 
-export const getFormations: RequestHandler = async (req, res) => {
+export const getExperiences: RequestHandler = async (req, res) => {
   try {
     if (!GET_EXPERIENCES) {
       res

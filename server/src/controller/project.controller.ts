@@ -8,7 +8,13 @@ import {
 import { RequestHandler } from "express";
 import { RowDataPacket } from "mysql2";
 
-const { GET_PROJECTS, GET_PROJECT_ID } = process.env;
+const {
+  GET_PROJECTS,
+  GET_PROJECT_ID,
+  CREATE_NEW_PROJECT,
+  MODIFY_PROJECT,
+  DELETE_PROJECT,
+} = process.env;
 
 export const getProjects: RequestHandler = async (req, res) => {
   try {
