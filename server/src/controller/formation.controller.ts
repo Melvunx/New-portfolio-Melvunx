@@ -16,6 +16,8 @@ const {
   UPDATE_FORMATION,
   DELETE_FORMATION,
   CREATE_ADDRESS,
+  UPDATE_ADDRESS,
+  DELETE_ADDRESS,
 } = process.env;
 
 export const getFormations: RequestHandler = async (req, res) => {
@@ -142,10 +144,14 @@ export const createNewFormation: RequestHandler<
 export const updateFormation: RequestHandler = async (req, res) => {
   try {
     const user: Account = req.cookies.userCookie;
+    const { add_id, form_id } = req.params;
 
-    const { id } = req.params;
+    const {
+      address: { city, department, country },
+      formation: { title, description, level, start_date, end_date },
+    } = req.body;
 
-    if (!UPDATE_FORMATION) {
+    if (!UPDATE_FORMATION || !UPDATE_ADDRESS) {
       res.status(500).send(handleError("Sql request is not defined"));
       return;
     } else if (!user || user.role_id !== 2) {
@@ -155,10 +161,61 @@ export const updateFormation: RequestHandler = async (req, res) => {
           handleError("Unauthorized or session expired", "Unauthorized access")
         );
       return;
-    } else if (!id) {
+    } else if (!add_id || !form_id) {
       res.status(400).send(handleError("Id required !", "Missing item !"));
       return;
+    } else if (
+      !city ||
+      !department ||
+      !country ||
+      !title ||
+      !description ||
+      !level ||
+      !start_date ||
+      !end_date
+    ) {
+      res
+        .status(400)
+        .send(handleError("Missing credentials", "Undefined element !"));
+      return;
     }
+
+    await pool.query(UPDATE_ADDRESS, [city, department, country, add_id]);
+
+    await pool.query(UPDATE_FORMATION, [
+      title,
+      description,
+      level,
+      start_date,
+      end_date,
+      form_id,
+    ]);
+
+    loggedHandleSuccess("Formation modified", {
+      address: { id: add_id, city, department, country },
+      formation: {
+        id: form_id,
+        title,
+        description,
+        level,
+        start_date,
+        end_date,
+      },
+    });
+
+    res.status(200).json(
+      handleSuccess("Formation modified", {
+        address: { id: add_id, city, department, country },
+        formation: {
+          id: form_id,
+          title,
+          description,
+          level,
+          start_date,
+          end_date,
+        },
+      })
+    );
   } catch (error) {
     loggedHandleError(error, "Error caught");
     res.status(500).send(handleError(error, "Error caught"));
@@ -170,7 +227,9 @@ export const deleteFormation: RequestHandler = async (req, res) => {
   try {
     const user: Account = req.cookies.userCookie;
 
-    if (!DELETE_FORMATION) {
+    const { add_id, form_id } = req.params;
+
+    if (!DELETE_FORMATION || !DELETE_ADDRESS || !GET_FORMATION_ID) {
       res.status(500).send(handleError("Sql request is not defined"));
       return;
     } else if (!user || user.role_id !== 2) {
@@ -180,7 +239,54 @@ export const deleteFormation: RequestHandler = async (req, res) => {
           handleError("Unauthorized or session expired", "Unauthorized access")
         );
       return;
+    } else if (!add_id || !form_id) {
+      res.status(400).send(handleError("Missing id", "Missing parameters !"));
+      return;
     }
+
+    const [deletedAddress] = await pool.query<RowDataPacket[] & OkPacketParams>(
+      DELETE_ADDRESS,
+      [add_id]
+    );
+
+    if (deletedAddress.affectedRows === 0) {
+      res.status(500).send(handleError("failed to deleted this address"));
+      return;
+    }
+
+    console.log("Address deleted! Check experience in progress...");
+
+    const [checkFormDeleted] = await pool.query<RowDataPacket[] & Formation>(
+      GET_FORMATION_ID,
+      [form_id]
+    );
+
+    console.log("Address deleted! Check formation in progress...");
+
+    if (checkFormDeleted.length > 0) {
+      console.log("Experience not deleted ! suppression in progress...");
+      const [deletedForm] = await pool.query<RowDataPacket[] & OkPacketParams>(
+        DELETE_FORMATION,
+        [form_id]
+      );
+      if (deletedForm.affectedRows === 0) {
+        res.status(500).send(handleError("failed to deleted this experience"));
+        return;
+      }
+      console.log("Formation deleted !");
+    }
+
+    console.log("Address and Formation deleted !");
+
+    loggedHandleSuccess(
+      "Formation deleted !",
+      `Formation with the id ${form_id}`
+    );
+    res
+      .status(200)
+      .json(
+        handleSuccess("Formation deleted !", `Formation with the id ${form_id}`)
+      );
   } catch (error) {
     loggedHandleError(error, "Error caught");
     res.status(500).send(handleError(error, "Error caught"));

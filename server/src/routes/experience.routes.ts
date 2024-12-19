@@ -26,7 +26,7 @@ router.post(
 
 // Patch
 router.patch(
-  "/an/exp?expid=:exp_id&addid=:add_id",
+  "/an/:add_id/:exp_id",
   userAuthentification,
   adminAuthentification,
   updateExperience
@@ -34,7 +34,7 @@ router.patch(
 
 // Delete
 router.delete(
-  "/an/exp?expid=:exp_id&addid=:add_id",
+  "/an/:add_id/:exp_id",
   userAuthentification,
   adminAuthentification,
   deleteExperience

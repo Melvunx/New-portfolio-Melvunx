@@ -25,11 +25,16 @@ router.post(
 );
 
 // Patch
-router.patch("/", userAuthentification, adminAuthentification, updateFormation);
+router.patch(
+  "/an/:add_id/form_id",
+  userAuthentification,
+  adminAuthentification,
+  updateFormation
+);
 
 // Delete
 router.delete(
-  "/",
+  "/an/:add_id/form_id",
   userAuthentification,
   adminAuthentification,
   deleteFormation

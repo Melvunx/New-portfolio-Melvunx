@@ -122,7 +122,7 @@ export const createNewExperience: RequestHandler<
 export const updateExperience: RequestHandler = async (req, res) => {
   try {
     const user: Account = req.cookies.userCookie;
-    const { exp_id, add_id } = req.params;
+    const { add_id, exp_id } = req.params;
 
     const {
       address: { city, department, country },
@@ -148,6 +148,11 @@ export const updateExperience: RequestHandler = async (req, res) => {
       return;
     } else if (!exp_id || !add_id) {
       res.status(400).send(handleError("Id required !", "Missing item !"));
+      return;
+    } else if (!city || !department || !country || !title || !task || !skills) {
+      res
+        .status(400)
+        .send(handleError("Missing credentials", "Undefined element !"));
       return;
     }
 
@@ -220,7 +225,10 @@ export const deleteExperience: RequestHandler = async (req, res) => {
         res.status(500).send(handleError("failed to deleted this experience"));
         return;
       }
+      console.log("Experience deleted !");
     }
+
+    console.log("Address and Experience deleted !");
 
     loggedHandleSuccess("Experience deleted !", `Exp with the id ${exp_id}`);
     res
