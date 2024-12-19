@@ -1,19 +1,18 @@
 import pool from "@config/database";
 import { Account } from "@schema/account.schema";
-import { Project } from "@schema/project.schema";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
 import {
   handleSuccess,
   loggedHandleSuccess,
 } from "@utils/handleMessageSuccess";
 import { RequestHandler } from "express";
-import { OkPacketParams, RowDataPacket } from "mysql2";
 
 const {
   GET_PROJECTS,
   GET_PROJECT_ID,
   CREATE_NEW_PROJECT,
   MODIFY_PROJECT,
+  UPDATE_DATE,
   DELETE_PROJECT,
 } = process.env;
 
@@ -22,19 +21,17 @@ export const getProjects: RequestHandler = async (req, res) => {
     if (!GET_PROJECTS) {
       res
         .status(500)
-        .send(handleError(new Error("Sql request is not defined")));
+        .send(handleError("Sql request is not defined", "Undefined element"));
       return;
     }
 
-    const [projects] = await pool.query<RowDataPacket[] & Project[]>(
-      GET_PROJECTS
-    );
+    const [projects] = await pool.query(GET_PROJECTS);
 
     loggedHandleSuccess("Get all projects", projects);
     res.status(200).json(handleSuccess("Get all projects", projects));
   } catch (error) {
-    loggedHandleError(error);
-    res.status(500).send(handleError(error));
+    loggedHandleError(error, "Catched error");
+    res.status(500).send(handleError(error, "Catched error"));
     return;
   }
 };
@@ -46,21 +43,14 @@ export const getProjectId: RequestHandler = async (req, res) => {
     if (!GET_PROJECT_ID) {
       res
         .status(500)
-        .send(
-          handleError(
-            new Error("Sql request is not defined"),
-            "Undefined element"
-          )
-        );
+        .send(handleError("Sql request is not defined", "Undefined element"));
       return;
     } else if (!id) {
       res.status(400).send(handleError("Id required !", "Missing item !"));
       return;
     }
 
-    const [project] = await pool.query<RowDataPacket[] & Project[]>(
-      GET_PROJECT_ID
-    );
+    const [project] = await pool.query(GET_PROJECT_ID);
 
     loggedHandleSuccess("Get project by id", project);
     res.status(200).json(handleSuccess("Get project by id", project));
@@ -78,14 +68,9 @@ export const createNewProject: RequestHandler = async (req, res) => {
     if (!CREATE_NEW_PROJECT) {
       res
         .status(500)
-        .send(
-          handleError(
-            new Error("Sql request is not defined"),
-            "Undefined element"
-          )
-        );
+        .send(handleError("Sql request is not defined", "Undefined element"));
       return;
-    } else if (!user || user.id !== 2) {
+    } else if (!user || user.role_id !== 2) {
       res
         .status(401)
         .send(
@@ -105,22 +90,19 @@ export const createNewProject: RequestHandler = async (req, res) => {
     } = req.body;
 
     if (!title || !description || !project_status_id || !github_url) {
-      res.status(400).send(handleError(new Error("Missing required fields")));
+      res.status(400).send(handleError("Missing required fields"));
       return;
     }
 
-    const [newProject] = await pool.query<RowDataPacket[] & OkPacketParams>(
-      CREATE_NEW_PROJECT,
-      [
-        title,
-        description,
-        project_status_id,
-        github_url,
-        production_url ? production_url : "NULL",
-        image_url ? image_url : "NULL",
-        video_url ? video_url : "NULL",
-      ]
-    );
+    const [newProject] = await pool.query(CREATE_NEW_PROJECT, [
+      title,
+      description,
+      project_status_id,
+      github_url,
+      production_url ? production_url : "NULL",
+      image_url ? image_url : "NULL",
+      video_url ? video_url : "NULL",
+    ]);
 
     loggedHandleSuccess("New project !", {
       packets: newProject,
@@ -129,9 +111,9 @@ export const createNewProject: RequestHandler = async (req, res) => {
         description,
         project_status_id,
         github_url,
-        production_url,
-        image_url,
-        video_url,
+        production_url: production_url ? production_url : "NULL",
+        image_url: image_url ? image_url : "NULL",
+        video_url: video_url ? video_url : "NULL",
       },
     });
 
@@ -141,24 +123,24 @@ export const createNewProject: RequestHandler = async (req, res) => {
         description,
         project_status_id,
         github_url,
-        production_url,
-        image_url,
-        video_url,
+        production_url: production_url ? production_url : "NULL",
+        image_url: image_url ? image_url : "NULL",
+        video_url: video_url ? video_url : "NULL",
       })
     );
   } catch (error) {
-    loggedHandleError(error);
-    res.status(500).send(handleError(error));
+    loggedHandleError(error, "Catched error");
+    res.status(500).send(handleError(error, "Catched error"));
     return;
   }
 };
 
-export const projectModifier: RequestHandler = async (req, res) => {
+export const updateProject: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
     const user: Account = req.cookies.userCookie;
 
-    if (!MODIFY_PROJECT) {
+    if (!MODIFY_PROJECT || !UPDATE_DATE) {
       res
         .status(500)
         .send(
@@ -168,12 +150,10 @@ export const projectModifier: RequestHandler = async (req, res) => {
           )
         );
       return;
-    } else if (!user || user.id !== 2) {
-      res
-        .status(401)
-        .send(handleError(new Error("Unauthorized"), "Unauthorized"));
+    } else if (!user || user.role_id !== 2) {
+      res.status(401).send(handleError("Unauthorized", "Unauthorized"));
     } else if (!id) {
-      res.status(400).send(handleError(new Error("Missing id"), "Missing id"));
+      res.status(400).send(handleError("Missing id", "Missing id"));
       return;
     }
 
@@ -192,9 +172,7 @@ export const projectModifier: RequestHandler = async (req, res) => {
       return;
     }
 
-    const [modifiedProject] = await pool.query<
-      RowDataPacket[] & OkPacketParams[]
-    >(MODIFY_PROJECT, [
+    const [modifiedProject] = await pool.query(MODIFY_PROJECT, [
       title,
       description,
       project_status_id,
@@ -205,6 +183,8 @@ export const projectModifier: RequestHandler = async (req, res) => {
       id,
     ]);
 
+    await pool.query(UPDATE_DATE, [id]);
+
     loggedHandleSuccess("Modify project", {
       packet: modifiedProject,
       modifiedProject: {
@@ -213,9 +193,9 @@ export const projectModifier: RequestHandler = async (req, res) => {
         description,
         project_status_id,
         github_url,
-        production_url,
-        image_url,
-        video_url,
+        production_url: production_url ? production_url : "NULL",
+        image_url: image_url ? image_url : "NULL",
+        video_url: video_url ? video_url : "NULL",
       },
     });
     res.status(200).json(
@@ -225,14 +205,14 @@ export const projectModifier: RequestHandler = async (req, res) => {
         description,
         project_status_id,
         github_url,
-        production_url,
-        image_url,
-        video_url,
+        production_url: production_url ? production_url : "NULL",
+        image_url: image_url ? image_url : "NULL",
+        video_url: video_url ? video_url : "NULL",
       })
     );
   } catch (error) {
-    loggedHandleError(error);
-    res.status(500).send(handleError(error));
+    loggedHandleError(error, "Catched error");
+    res.status(500).send(handleError(error, "Catched error"));
     return;
   }
 };
@@ -245,11 +225,9 @@ export const deleteProject: RequestHandler = async (req, res) => {
     if (!DELETE_PROJECT) {
       res
         .status(500)
-        .send(
-          handleError(new Error("Sql request not defined"), "Undefined element")
-        );
+        .send(handleError("Sql request not defined", "Undefined element"));
       return;
-    } else if (!user || user.id !== 2) {
+    } else if (!user || user.role_id !== 2) {
       res
         .status(401)
         .send(
@@ -260,17 +238,17 @@ export const deleteProject: RequestHandler = async (req, res) => {
         );
       return;
     } else if (!id) {
-      res.status(400).send(handleError(new Error("Missing id"), "Missing id"));
+      res.status(400).send(handleError("Missing id", "Missing id"));
       return;
     }
 
-    await pool.query<RowDataPacket[] & OkPacketParams>(DELETE_PROJECT, [id]);
+    await pool.query(DELETE_PROJECT, [id]);
 
     loggedHandleSuccess(`Project with the id ${id} deleted`);
     res.status(200).send(handleSuccess("Project deleted successfully"));
   } catch (error) {
-    loggedHandleError(error);
-    res.status(500).send(handleError(error));
+    loggedHandleError(error, "Catched error");
+    res.status(500).send(handleError(error, "Catched error"));
     return;
   }
 };

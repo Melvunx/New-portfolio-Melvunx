@@ -11,6 +11,7 @@ export const ProjectSchema = z.object({
   image_url: z.string().optional(),
   video_url: z.string().optional(),
   createdAt: z.date(),
+  updatedAt: z.date().optional(),
 });
 
 export type Project = z.infer<typeof ProjectSchema>;

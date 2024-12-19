@@ -7,7 +7,7 @@ import {
   deleteProject,
   getProjectId,
   getProjects,
-  projectModifier,
+  updateProject,
 } from "@controller/project.controller";
 import { Router } from "express";
 const router = Router();
@@ -18,23 +18,23 @@ router.get("/:id", getProjectId);
 
 // Post projects
 router.post(
-  "/new-project",
+  "/an/new-project",
   userAuthentification,
   adminAuthentification,
   createNewProject
 );
 
-// Put projects
-router.put(
-  "/:id",
+// Patch projects
+router.patch(
+  "/an/:id",
   userAuthentification,
   adminAuthentification,
-  projectModifier
+  updateProject
 );
 
 // Delete projects
 router.delete(
-  "/:id",
+  "/an/:id",
   userAuthentification,
   adminAuthentification,
   deleteProject

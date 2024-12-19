@@ -1,4 +1,4 @@
-import { userAuthentification } from "@/middleware/auth.middleware";
+import { getReactions } from "@controller/reaction.controller";
 import { Router } from "express";
 const router = Router();
 
