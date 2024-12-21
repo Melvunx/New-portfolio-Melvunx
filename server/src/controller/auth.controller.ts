@@ -163,7 +163,7 @@ export const passportLogout: RequestHandler = (req, res) => {
   });
 };
 
-export const adminUserController: RequestHandler = async (req, res) => {
+export const userController: RequestHandler = async (req, res) => {
   const user: Account = req.cookies.userCookie;
 
   if (!SELECT_ALL_USERS) {

@@ -1,12 +1,12 @@
 import {
   accountRegister,
-  adminUserController,
   googleLogin,
   passportLogin,
   passportLogout,
+  userController,
 } from "@controller/auth.controller";
 import {
-  adminAuthentification,
+  moderatorAuthentification,
   userAuthentification,
 } from "@middleware/auth.middleware";
 import { Router } from "express";
@@ -26,8 +26,8 @@ router.post("/logout", passportLogout);
 router.get(
   "/user",
   userAuthentification,
-  adminAuthentification,
-  adminUserController
+  moderatorAuthentification,
+  userController
 );
 
 module.exports = router;

@@ -2,13 +2,11 @@ import { Account } from "@/schema/account.schema";
 import colors from "@/schema/colors.schema";
 import { handleSuccess } from "@/utils/handleMessageSuccess";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
-import { log } from "console";
 import { RequestHandler } from "express";
 
 export const userAuthentification: RequestHandler = (req, res, next) => {
   const user: Account = req.cookies.userCookie;
   console.log("Authentification in progress...");
-  log("user cookie", user);
   if (!user) {
     loggedHandleError("User not found or session expired");
     res
@@ -44,6 +42,43 @@ export const userAuthentification: RequestHandler = (req, res, next) => {
   });
   res.status(200);
   next();
+};
+
+export const moderatorAuthentification: RequestHandler = (req, res, next) => {
+  const user: Account = req.cookies.userCookie;
+
+  if (!user) {
+    loggedHandleError("User not found or session expired");
+    res
+      .status(401)
+      .json(
+        handleError(
+          "User not found or session expired",
+          "You are not logged in"
+        )
+      );
+    return;
+  }
+  switch (user.role_id) {
+    case 1: // Utilisateur
+      loggedHandleError("Unauthorized", "You aren't the right");
+      res.status(403).send(handleError("Unauthorized", "You aren't the right"));
+      return;
+    case 2: // Administrateur
+      console.log(`Administrator ${user.username} is authentificated !`);
+      return next();
+    case 3: // Modérateur
+      console.log(`Moderator ${user.username} is authentificated !`);
+      return next();
+    default:
+      loggedHandleError("Unknown user role");
+      res
+        .status(403)
+        .json(
+          handleError("Unauthorized", "Access forbidden, unknown user role")
+        );
+      return;
+  }
 };
 
 export const adminAuthentification: RequestHandler = (req, res, next) => {
