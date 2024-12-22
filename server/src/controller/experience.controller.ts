@@ -1,14 +1,13 @@
-import {
-  handleSuccess,
-  loggedHandleSuccess,
-} from "@/utils/handleMessageSuccess";
 import pool from "@config/database";
 import { Address, Experience } from "@schema/aboutMe.schema";
 import { Account } from "@schema/account.schema";
-import { handleError } from "@utils/handleMessageError";
+import { handleError, loggedHandleError } from "@utils/handleMessageError";
+import {
+  handleSuccess,
+  loggedHandleSuccess,
+} from "@utils/handleMessageSuccess";
 import { RequestHandler } from "express";
 import { OkPacketParams, RowDataPacket } from "mysql2";
-import { loggedHandleError } from "../utils/handleMessageError";
 
 const {
   GET_EXPERIENCES,
