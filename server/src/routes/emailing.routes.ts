@@ -1,6 +1,6 @@
 import { getAllSenders, postEmail } from "@controller/emailing.controller";
 import {
-  adminAuthentification,
+  moderatorAuthentification,
   userAuthentification,
 } from "@middleware/auth.middleware";
 import { Router } from "express";
@@ -10,7 +10,7 @@ const router = Router();
 router.get(
   "/senders",
   userAuthentification,
-  adminAuthentification,
+  moderatorAuthentification,
   getAllSenders
 );
 

@@ -101,7 +101,7 @@ app.use("/api/emailing", emailingRoutes);
 app.use("/api/experience", experienceRoutes);
 app.use("/api/formation", formationRoutes);
 app.use("/api/project", projectRoutes);
-app.use("/api/reacion", reactionRoutes);
+app.use("/api/reaction", reactionRoutes);
 
 pool
   .query("SELECT 1")
