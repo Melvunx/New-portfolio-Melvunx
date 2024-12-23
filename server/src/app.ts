@@ -123,3 +123,10 @@ pool
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
+
+// const testGenerator = new Generator(14);
+
+// setInterval(() => {
+//   console.log("------------------------------------------");
+//   testGenerator.generateIds();
+// }, 1500);
