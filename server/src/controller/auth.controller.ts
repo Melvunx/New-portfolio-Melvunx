@@ -1,5 +1,6 @@
 import { Account } from "@/schema/account.schema";
 import colors from "@/schema/colors.schema";
+import { idGenerator } from "@/utils/handleIds";
 import pool from "@config/database";
 import "@strategies/google-strategy";
 import "@strategies/local-strategy";
@@ -10,7 +11,7 @@ import {
 } from "@utils/handleMessageSuccess";
 import bcrypt from "bcrypt";
 import { RequestHandler } from "express";
-import { RowDataPacket } from "mysql2";
+import { OkPacketParams, RowDataPacket } from "mysql2";
 import passport from "passport";
 
 const {
@@ -25,24 +26,29 @@ const {
   SUB_MANAGER_USERNAME,
   SUB_MANAGER_EMAIL,
   SELECT_ALL_USERS,
-  CHECK_LOGIN,
+  CREATE_REACTION_LOG,
 } = process.env;
 
 export const accountRegister: RequestHandler<{}, {}, Account> = async (
   req,
   res
 ) => {
-  const { username, email, password, name, lastname } = req.body;
-
-  if (!CREATE_NEW_ACCOUNT || !CHECK_USERNAME || !CHECK_EMAIL) {
-    res.status(500).send(handleError("Sql request not defined"));
-    return;
-  } else if (!username || !email || !password || !name || !lastname) {
-    res.status(400).send(handleError("Missing fields"));
-    return;
-  }
-
   try {
+    const { username, email, password, name, lastname } = req.body;
+
+    if (
+      !CREATE_NEW_ACCOUNT ||
+      !CHECK_USERNAME ||
+      !CHECK_EMAIL ||
+      !CREATE_REACTION_LOG
+    ) {
+      res.status(500).send(handleError("Sql request not defined"));
+      return;
+    } else if (!username || !email || !password || !name || !lastname) {
+      res.status(400).send(handleError("Missing fields"));
+      return;
+    }
+
     const [checkUsername] = await pool.query<RowDataPacket[]>(CHECK_USERNAME, [
       username,
     ]);
@@ -73,19 +79,26 @@ export const accountRegister: RequestHandler<{}, {}, Account> = async (
     const salt = await bcrypt.genSalt(Number(SALT_ROUNDS) || 10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newAccount = await pool.query(CREATE_NEW_ACCOUNT, [
-      username,
-      email,
-      hashedPassword,
-      name,
-      lastname,
-      userRole,
-    ]);
+    const [newAccount] = await pool.query<RowDataPacket[] & OkPacketParams>(
+      CREATE_NEW_ACCOUNT,
+      [username, email, hashedPassword, name, lastname, userRole]
+    );
 
-    if (!newAccount) {
-      res
-        .status(500)
-        .send(handleError("Error creating new account", "Error on insert"));
+    const newAccountId = newAccount.insertId;
+
+    if (!newAccountId) {
+      res.status(500).send(handleError("Failed to create new account"));
+      return;
+    }
+
+    const generetedId = await idGenerator();
+
+    const [userReactionLog] = await pool.query<
+      RowDataPacket[] & OkPacketParams
+    >(CREATE_REACTION_LOG, [generetedId, newAccountId]);
+
+    if (userReactionLog.affectedRows === 0) {
+      res.status(500).send(handleError("Failed to create user reaction log"));
       return;
     }
 
@@ -97,14 +110,18 @@ export const accountRegister: RequestHandler<{}, {}, Account> = async (
       lastname,
       role_id: userRole,
     });
+
     res.status(201).json(
       handleSuccess("New  Account created", {
-        username,
-        email,
-        password: hashedPassword,
-        name,
-        lastname,
-        role_id: userRole,
+        new_account: {
+          username,
+          email,
+          password: hashedPassword,
+          name,
+          lastname,
+          role_id: userRole,
+        },
+        user_reaction_log: { id: generetedId, account_id: newAccountId },
       })
     );
   } catch (error) {

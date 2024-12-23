@@ -3,7 +3,7 @@ import {
   handleSuccess,
   loggedHandleSuccess,
 } from "@/utils/handleMessageSuccess";
-import { displayReactionCount } from "@/utils/handleReactionId";
+import { displayReactionCount } from "@/utils/handleIds";
 import {
   Account,
   Reaction,
