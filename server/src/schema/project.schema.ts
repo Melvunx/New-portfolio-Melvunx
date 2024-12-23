@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 export const ProjectSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   title: z.string(),
   description: z.string(),
-  project_status_id: z.number(),
+  project_status_id: z.string(),
   reaction_target_id: z.string(),
   production_url: z.string().optional(),
   github_url: z.string(),
@@ -27,7 +27,7 @@ export const ProjectResponseSchema = z.object({
 });
 
 export const ProjectStatusSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   status_name: z.string(),
 });
 
@@ -44,16 +44,16 @@ export const ProjectStatusResponseSchema = z.object({
 });
 
 export const ProjectTechnologySchema = z.object({
-  project_id: z.number(),
-  technology_id: z.number(),
+  project_id: z.string(),
+  technology_id: z.string(),
 });
 
 export type ProjectTechnology = z.infer<typeof ProjectTechnologySchema>;
 
 export const TechnologySchema = z.object({
-  id: z.number(),
+  id: z.string(),
   name: z.string(),
-  category_id: z.number(),
+  category_id: z.string(),
 });
 
 export type Technology = z.infer<typeof TechnologySchema>;
@@ -69,7 +69,7 @@ export const TechnologtResponseSchema = z.object({
 });
 
 export const CategorySchema = z.object({
-  id: z.number(),
+  id: z.string(),
   name: z.string(),
 });
 

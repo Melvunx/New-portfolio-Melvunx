@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const AvatarSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   name: z.string(),
 });
 

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const AccountSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   username: z.string(),
   email: z.string(),
   password: z.string(),
@@ -9,7 +9,7 @@ export const AccountSchema = z.object({
   lastname: z.string(),
   cretedAt: z.date(),
   lastlogin: z.date(),
-  role_id: z.number(),
+  role_id: z.string(),
 });
 
 export type Account = z.infer<typeof AccountSchema>;
@@ -72,18 +72,18 @@ export const GoogleProfileSchema = z.object({
 export type GoogleProfile = z.infer<typeof GoogleProfileSchema>;
 
 export const UserRoleSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   status: z.string(),
 });
 
 export type UserRole = z.infer<typeof UserRoleSchema>;
 
 export const ReactionLogSchema = z.object({
-  id: z.number(),
-  target_type_id: z.number(),
-  target_id: z.number(),
-  reaction_id: z.number(),
-  account_id: z.number(),
+  id: z.string(),
+  target_type_id: z.string(),
+  target_id: z.string(),
+  reaction_id: z.string(),
+  account_id: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -91,7 +91,7 @@ export const ReactionLogSchema = z.object({
 export type ReactionLog = z.infer<typeof ReactionLogSchema>;
 
 export const ReactionSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   emoji: z.string(),
   action: z.string(),
   tooltip: z.string(),
@@ -102,7 +102,7 @@ export type Reaction = z.infer<typeof ReactionSchema>;
 export const ReactionsSchema = z.array(ReactionSchema);
 
 export const ReactionTargetSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   target_name: z.string(),
 });
 

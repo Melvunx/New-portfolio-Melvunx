@@ -1,23 +1,15 @@
 import { z } from "zod";
 
-export interface Letter {
-  id: number;
-  sender: string;
-  object: string;
-  email: string;
-  message: string;
-  sendAt: Date;
-  account_id?: number;
-}
+export type Letter = z.infer<typeof LetterSchema>;
 
 export const LetterSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   sender: z.string(),
   object: z.string(),
   email: z.string(),
   message: z.string(),
   sendAt: z.date(),
-  account_id: z.number().optional(),
+  account_id: z.string().optional(),
 });
 
 export const LettersSchema = z.array(LetterSchema);
