@@ -1,7 +1,7 @@
-import { Account } from "@/schema/account.schema";
-import colors from "@/schema/colors.schema";
-import { idGenerator } from "@/utils/handleIds";
 import pool from "@config/database";
+import { Account } from "@schema/account.schema";
+import colors from "@schema/colors.schema";
+import { Generator } from "@services/generator.services";
 import "@strategies/google-strategy";
 import "@strategies/local-strategy";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
@@ -91,11 +91,12 @@ export const accountRegister: RequestHandler<{}, {}, Account> = async (
       return;
     }
 
-    const generetedId = await idGenerator();
+    const generetor = new Generator(12);
+    const generatedId = generetor.generateIds();
 
     const [userReactionLog] = await pool.query<
       RowDataPacket[] & OkPacketParams
-    >(CREATE_REACTION_LOG, [generetedId, newAccountId]);
+    >(CREATE_REACTION_LOG, [generatedId, newAccountId]);
 
     if (userReactionLog.affectedRows === 0) {
       res.status(500).send(handleError("Failed to create user reaction log"));
@@ -121,7 +122,7 @@ export const accountRegister: RequestHandler<{}, {}, Account> = async (
           lastname,
           role_id: userRole,
         },
-        user_reaction_log: { id: generetedId, account_id: newAccountId },
+        user_reaction_log: { id: generatedId, account_id: newAccountId },
       })
     );
   } catch (error) {

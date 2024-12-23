@@ -1,9 +1,8 @@
-import colors from "@/schema/colors.schema";
-import { idGenerator } from "@/utils/handleIds";
 import pool from "@config/database";
 import { Account, GoogleProfile } from "@schema/account.schema";
+import colors from "@schema/colors.schema";
+import { Generator } from "@services/generator.services";
 import { handleError } from "@utils/handleMessageError";
-import bcrypt from "bcrypt";
 import { OkPacketParams, RowDataPacket } from "mysql2";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth2";
@@ -61,9 +60,9 @@ passport.use(
 
         console.log("Email not found... Creation new account...");
 
-        const generatedPassword = await idGenerator();
-        const salt = await bcrypt.genSalt(Number(SALT_ROUNDS) || 10);
-        const hashedPassword = await bcrypt.hash(generatedPassword, salt);
+        const generator = new Generator(12);
+        const password = generator.generatePassword();
+        const hashedPassword = generator.generateHasshedPassword(password);
 
         const newGoogleAccount = await pool.query<
           RowDataPacket[] & OkPacketParams & Account

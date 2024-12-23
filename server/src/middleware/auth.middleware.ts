@@ -1,6 +1,5 @@
 import { Account } from "@/schema/account.schema";
 import colors from "@/schema/colors.schema";
-import { handleSuccess } from "@/utils/handleMessageSuccess";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
 import { RequestHandler } from "express";
 
@@ -36,9 +35,7 @@ export const userAuthentification: RequestHandler = (req, res, next) => {
           )
         );
     }
-    console.log(
-      handleSuccess(`Inside the ${user.username}'s session data`, sessionData)
-    );
+    console.log(colors.info({ session: sessionData?.cookie }));
   });
   res.status(200);
   next();

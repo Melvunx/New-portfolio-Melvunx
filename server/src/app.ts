@@ -1,6 +1,7 @@
 require("dotenv").config();
 import colors from "@/schema/colors.schema";
 import pool from "@config/database";
+import { Account } from "@schema/account.schema";
 import "@strategies/google-strategy";
 import "@strategies/local-strategy";
 import cookieParser from "cookie-parser";
@@ -9,7 +10,6 @@ import MySQLStoreFactory from "express-mysql-session";
 import * as session from "express-session";
 import { RowDataPacket } from "mysql2";
 import passport from "passport";
-import { Account } from "./schema/account.schema";
 import { handleError, loggedHandleError } from "./utils/handleMessageError";
 const bodyParser = require("body-parser");
 const cors = require("cors");
