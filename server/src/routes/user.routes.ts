@@ -1,6 +1,8 @@
 import {
   getAllReactionLog,
   getUserReactionLog,
+  reactToElement,
+  removeReactionFromElement,
 } from "@controller/reactionLog.controller";
 import { getUserProfile } from "@controller/user.controller";
 import {
@@ -20,6 +22,16 @@ router.get(
   userAuthentification,
   adminAuthentification,
   getAllReactionLog
+);
+
+// Add a reaction
+router.post("/add/reaction-log/:reaction_id/:target_id", userAuthentification, reactToElement);
+
+// Remove a reaction
+router.delete(
+  "/remove/reacion-log",
+  userAuthentification,
+  removeReactionFromElement
 );
 
 module.exports = router;

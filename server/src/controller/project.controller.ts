@@ -1,3 +1,6 @@
+import { Project } from "@/schema/project.schema";
+import { checkAffectedRow } from "@/services/handleAffectedRows.services";
+import { updateDateTime } from "@/services/handleDateTime.services";
 import pool from "@config/database";
 import { Account } from "@schema/account.schema";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
@@ -6,6 +9,7 @@ import {
   loggedHandleSuccess,
 } from "@utils/handleMessageSuccess";
 import { RequestHandler } from "express";
+import { OkPacketParams, RowDataPacket } from "mysql2";
 
 const {
   GET_PROJECTS,
@@ -14,6 +18,7 @@ const {
   MODIFY_PROJECT,
   UPDATE_DATE,
   DELETE_PROJECT,
+  ADMIN_ID,
 } = process.env;
 
 export const getProjects: RequestHandler = async (req, res) => {
@@ -61,16 +66,20 @@ export const getProjectId: RequestHandler = async (req, res) => {
   }
 };
 
-export const createNewProject: RequestHandler = async (req, res) => {
+export const createNewProject: RequestHandler<
+  {},
+  {},
+  { project: Project }
+> = async (req, res) => {
   try {
     const user: Account = req.cookies.userCookie;
 
-    if (!CREATE_NEW_PROJECT) {
+    if (!CREATE_NEW_PROJECT || !ADMIN_ID) {
       res
         .status(500)
         .send(handleError("Sql request is not defined", "Undefined element"));
       return;
-    } else if (!user || user.role_id !== 2) {
+    } else if (!user || user.role_id !== ADMIN_ID) {
       res
         .status(401)
         .send(
@@ -80,13 +89,15 @@ export const createNewProject: RequestHandler = async (req, res) => {
     }
 
     const {
-      title,
-      description,
-      project_status_id,
-      github_url,
-      production_url,
-      image_url,
-      video_url,
+      project: {
+        title,
+        description,
+        project_status_id,
+        github_url,
+        production_url,
+        image_url,
+        video_url,
+      },
     } = req.body;
 
     if (!title || !description || !project_status_id || !github_url) {
@@ -94,18 +105,22 @@ export const createNewProject: RequestHandler = async (req, res) => {
       return;
     }
 
-    const [newProject] = await pool.query(CREATE_NEW_PROJECT, [
-      title,
-      description,
-      project_status_id,
-      github_url,
-      production_url ? production_url : "NULL",
-      image_url ? image_url : "NULL",
-      video_url ? video_url : "NULL",
-    ]);
+    const [newProject] = await pool.query<RowDataPacket[] & OkPacketParams>(
+      CREATE_NEW_PROJECT,
+      [
+        title,
+        description,
+        project_status_id,
+        github_url,
+        production_url ? production_url : "NULL",
+        image_url ? image_url : "NULL",
+        video_url ? video_url : "NULL",
+      ]
+    );
+
+    checkAffectedRow(newProject);
 
     loggedHandleSuccess("New project !", {
-      packets: newProject,
       project: {
         title,
         description,
@@ -119,13 +134,15 @@ export const createNewProject: RequestHandler = async (req, res) => {
 
     res.status(201).json(
       handleSuccess("New project created", {
-        title,
-        description,
-        project_status_id,
-        github_url,
-        production_url: production_url ? production_url : "NULL",
-        image_url: image_url ? image_url : "NULL",
-        video_url: video_url ? video_url : "NULL",
+        project: {
+          title,
+          description,
+          project_status_id,
+          github_url,
+          production_url: production_url ? production_url : "NULL",
+          image_url: image_url ? image_url : "NULL",
+          video_url: video_url ? video_url : "NULL",
+        },
       })
     );
   } catch (error) {
@@ -140,7 +157,7 @@ export const updateProject: RequestHandler = async (req, res) => {
     const { id } = req.params;
     const user: Account = req.cookies.userCookie;
 
-    if (!MODIFY_PROJECT || !UPDATE_DATE) {
+    if (!MODIFY_PROJECT || !ADMIN_ID) {
       res
         .status(500)
         .send(
@@ -150,7 +167,7 @@ export const updateProject: RequestHandler = async (req, res) => {
           )
         );
       return;
-    } else if (!user || user.role_id !== 2) {
+    } else if (!user || user.role_id !== ADMIN_ID) {
       res.status(401).send(handleError("Unauthorized", "Unauthorized"));
     } else if (!id) {
       res.status(400).send(handleError("Missing id", "Missing id"));
@@ -172,7 +189,9 @@ export const updateProject: RequestHandler = async (req, res) => {
       return;
     }
 
-    const [modifiedProject] = await pool.query(MODIFY_PROJECT, [
+    const [modifiedProject] = await pool.query<
+      RowDataPacket[] & OkPacketParams
+    >(MODIFY_PROJECT, [
       title,
       description,
       project_status_id,
@@ -183,10 +202,11 @@ export const updateProject: RequestHandler = async (req, res) => {
       id,
     ]);
 
-    await pool.query(UPDATE_DATE, [id]);
+    checkAffectedRow(modifiedProject);
+
+    await updateDateTime("project", id);
 
     loggedHandleSuccess("Modify project", {
-      packet: modifiedProject,
       modifiedProject: {
         id,
         title,
@@ -222,12 +242,12 @@ export const deleteProject: RequestHandler = async (req, res) => {
     const { id } = req.params;
     const user: Account = req.cookies.userCookie;
 
-    if (!DELETE_PROJECT) {
+    if (!DELETE_PROJECT || !ADMIN_ID) {
       res
         .status(500)
         .send(handleError("Sql request not defined", "Undefined element"));
       return;
-    } else if (!user || user.role_id !== 2) {
+    } else if (!user || user.role_id !== ADMIN_ID) {
       res
         .status(401)
         .send(
@@ -242,9 +262,15 @@ export const deleteProject: RequestHandler = async (req, res) => {
       return;
     }
 
-    await pool.query(DELETE_PROJECT, [id]);
+    const [deletedProject] = await pool.query<RowDataPacket[] & OkPacketParams>(
+      DELETE_PROJECT,
+      [id]
+    );
+
+    checkAffectedRow(deletedProject);
 
     loggedHandleSuccess(`Project with the id ${id} deleted`);
+
     res.status(200).send(handleSuccess("Project deleted successfully"));
   } catch (error) {
     loggedHandleError(error, "Catched error");

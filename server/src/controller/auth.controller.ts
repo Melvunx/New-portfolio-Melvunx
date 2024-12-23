@@ -18,7 +18,6 @@ const {
   CREATE_NEW_ACCOUNT,
   CHECK_USERNAME,
   CHECK_EMAIL,
-  SALT_ROUNDS,
   ADMIN_USERNAME,
   ADMIN_USERNAME_BACKUP,
   ADMIN_EMAIL,
@@ -26,24 +25,25 @@ const {
   SUB_MANAGER_USERNAME,
   SUB_MANAGER_EMAIL,
   SELECT_ALL_USERS,
-  CREATE_REACTION_LOG,
   USER_ID,
   MODERATOR_ID,
   ADMIN_ID,
 } = process.env;
 
-export const accountRegister: RequestHandler<{}, {}, Account> = async (
-  req,
-  res
-) => {
+export const accountRegister: RequestHandler<
+  {},
+  {},
+  { account: Account }
+> = async (req, res) => {
   try {
-    const { username, email, password, name, lastname } = req.body;
+    const {
+      account: { username, email, password, name, lastname },
+    } = req.body;
 
     if (
       !CREATE_NEW_ACCOUNT ||
       !CHECK_USERNAME ||
       !CHECK_EMAIL ||
-      !CREATE_REACTION_LOG ||
       !USER_ID ||
       !MODERATOR_ID ||
       !ADMIN_ID
@@ -85,7 +85,6 @@ export const accountRegister: RequestHandler<{}, {}, Account> = async (
 
     const generator = new Generator(14);
     const userId = generator.generateIds();
-    const userReactionLogId = generator.generateIds();
     const hashedPassword = await generator.generateHasshedPassword(password);
 
     const [newAccount] = await pool.query<RowDataPacket[] & OkPacketParams>(
@@ -95,25 +94,21 @@ export const accountRegister: RequestHandler<{}, {}, Account> = async (
 
     checkAffectedRow(newAccount);
 
-    const [userReactionLog] = await pool.query<
-      RowDataPacket[] & OkPacketParams
-    >(CREATE_REACTION_LOG, [userReactionLogId, userId]);
-
-    checkAffectedRow(userReactionLog);
-
     loggedHandleSuccess("new Account created", {
-      id: userId,
-      username,
-      email,
-      password: hashedPassword,
-      name,
-      lastname,
-      role_id: role,
+      account: {
+        id: userId,
+        username,
+        email,
+        password: hashedPassword,
+        name,
+        lastname,
+        role_id: role,
+      },
     });
 
     res.status(201).json(
       handleSuccess("New  Account created", {
-        new_account: {
+        account: {
           id: userId,
           username,
           email,
@@ -122,7 +117,6 @@ export const accountRegister: RequestHandler<{}, {}, Account> = async (
           lastname,
           role_id: role,
         },
-        user_reaction_log: { id: userReactionLogId, account_id: userId },
       })
     );
   } catch (error) {

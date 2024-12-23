@@ -170,15 +170,3 @@ export const deleteReaction: RequestHandler = async (req, res) => {
     return;
   }
 };
-
-export const reactToElement: RequestHandler = (req, res) => {
-  try {
-    const user: Account = req.cookies.userCookie;
-
-    
-  } catch (error) {
-    loggedHandleError(error, "Error caught");
-    res.status(500).send(handleError(error, "Error caught"));
-    return;
-  }
-};

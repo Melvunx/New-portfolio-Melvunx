@@ -1,8 +1,9 @@
-import { Generator } from "@/services/generator.services";
-import { checkAffectedRow } from "@/services/handleAffectedRows.services";
 import pool from "@config/database";
 import { Address, Formation } from "@schema/aboutMe.schema";
 import { Account } from "@schema/account.schema";
+import { Generator } from "@services/generator.services";
+import { checkAffectedRow } from "@services/handleAffectedRows.services";
+import { updateDateTime } from "@services/handleDateTime.services";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
 import {
   handleSuccess,
@@ -206,6 +207,8 @@ export const updateFormation: RequestHandler = async (req, res) => {
     ]);
 
     checkAffectedRow(updateFormation);
+
+    await updateDateTime("formation", form_id);
 
     loggedHandleSuccess("Formation modified", {
       address: { id: add_id, city, department, country },

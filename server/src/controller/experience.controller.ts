@@ -3,6 +3,7 @@ import { Address, Experience } from "@schema/aboutMe.schema";
 import { Account } from "@schema/account.schema";
 import { Generator } from "@services/generator.services";
 import { checkAffectedRow } from "@services/handleAffectedRows.services";
+import { updateDateTime } from "@services/handleDateTime.services";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
 import {
   handleSuccess,
@@ -171,6 +172,8 @@ export const updateExperience: RequestHandler = async (req, res) => {
     );
 
     checkAffectedRow(updateExp);
+
+    await updateDateTime("experience", exp_id);
 
     loggedHandleSuccess("Experience modified !", {
       address: { id: add_id, city, department, country },

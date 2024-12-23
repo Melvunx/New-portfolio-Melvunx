@@ -1,8 +1,14 @@
 import {
-  moderatorAuthentification,
+  createNewReaction,
+  deleteReaction,
+  getReactionId,
+  getReactions,
+  updateReaction,
+} from "@controller/reaction.controller";
+import {
+  adminAuthentification,
   userAuthentification,
-} from "@/middleware/auth.middleware";
-import { createNewReaction, deleteReaction, getReactionId, getReactions, updateReaction } from "@controller/reaction.controller";
+} from "@middleware/auth.middleware";
 import { Router } from "express";
 const router = Router();
 
@@ -14,15 +20,15 @@ router.get("/panels/:id", getReactionId);
 router.post(
   "/new-reaction",
   userAuthentification,
-  moderatorAuthentification,
+  adminAuthentification,
   createNewReaction
 );
 
-// Patch
+// Modify a reaction
 router.patch(
   "/:id",
   userAuthentification,
-  moderatorAuthentification,
+  adminAuthentification,
   updateReaction
 );
 
@@ -30,7 +36,7 @@ router.patch(
 router.delete(
   "/:id",
   userAuthentification,
-  moderatorAuthentification,
+  adminAuthentification,
   deleteReaction
 );
 

@@ -3,7 +3,7 @@ import { OkPacketParams, RowDataPacket } from "mysql2";
 
 export const updateDateTime = async (
   table: string,
-  id: number,
+  id: string,
   row = "updatedAt"
 ) => {
   try {

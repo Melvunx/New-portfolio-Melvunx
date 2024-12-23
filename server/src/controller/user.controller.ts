@@ -29,7 +29,7 @@ export const getUserProfile: RequestHandler = async (req, res) => {
       return;
     }
 
-    const [userProfile] = await pool.query<RowDataPacket[] & Account[]>(
+    const [userProfile] = await pool.query<RowDataPacket[] & Account>(
       SELECT_USER_ID,
       [user.id]
     );

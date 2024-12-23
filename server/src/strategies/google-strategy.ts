@@ -1,3 +1,5 @@
+import { checkAffectedRow } from "@/services/handleAffectedRows.services";
+import { updateDateTime } from "@/services/handleDateTime.services";
 import pool from "@config/database";
 import { Account, GoogleProfile } from "@schema/account.schema";
 import colors from "@schema/colors.schema";
@@ -13,8 +15,6 @@ const {
   CALLBACK_URL,
   CHECK_GOOGLE_EMAIL,
   CREATE_NEW_ACCOUNT,
-  UPDATE_LASTLOGIN,
-  SALT_ROUNDS,
 } = process.env;
 
 passport.use(
@@ -31,7 +31,7 @@ passport.use(
         const { id, email, given_name, family_name, email_verified, verified } =
           profile;
 
-        if (!CHECK_GOOGLE_EMAIL || !CREATE_NEW_ACCOUNT || !UPDATE_LASTLOGIN)
+        if (!CHECK_GOOGLE_EMAIL || !CREATE_NEW_ACCOUNT)
           return done(handleError(new Error("Sql request not defined")), null);
 
         if (!email)
@@ -48,25 +48,27 @@ passport.use(
 
         console.log("Email checking...");
 
-        const [ExistingGoogleAccount] = await pool.query<
-          RowDataPacket[] & Account[]
-        >(CHECK_GOOGLE_EMAIL, [email]);
+        const [googleAccount] = await pool.query<RowDataPacket[] & Account>(
+          CHECK_GOOGLE_EMAIL,
+          [email]
+        );
 
-        const googleAccount = ExistingGoogleAccount[0];
-        if (ExistingGoogleAccount.length > 0) {
+        if (googleAccount.length > 0) {
           console.log(`Account found ! Hello ${googleAccount.username} !`);
           return done(null, googleAccount);
         }
 
         console.log("Email not found... Creation new account...");
 
-        const generator = new Generator(12);
+        const generator = new Generator(14);
+        const accountId = generator.generateIds();
         const password = generator.generatePassword();
         const hashedPassword = generator.generateHasshedPassword(password);
 
-        const newGoogleAccount = await pool.query<
+        const [newGoogleAccount] = await pool.query<
           RowDataPacket[] & OkPacketParams & Account
         >(CREATE_NEW_ACCOUNT, [
+          accountId,
           `user_${id}`,
           email,
           hashedPassword,
@@ -75,13 +77,14 @@ passport.use(
           1,
         ]);
 
-        const newUserId = newGoogleAccount[0].insertId;
+        checkAffectedRow(newGoogleAccount);
 
-        await pool.query(UPDATE_LASTLOGIN, [newUserId]);
+        await updateDateTime("account", accountId, "lastlogin");
 
         console.log(colors.info(`New User created! Welcome ${given_name}`));
+
         return done(null, {
-          id: newUserId,
+          id: accountId,
           username: `user_${id}`,
           name: given_name,
           lastname: family_name,

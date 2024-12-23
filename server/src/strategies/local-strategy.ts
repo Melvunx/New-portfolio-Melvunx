@@ -1,5 +1,6 @@
 import { Account } from "@/schema/account.schema";
 import colors from "@/schema/colors.schema";
+import { updateDateTime } from "@/services/handleDateTime.services";
 import pool from "@config/database";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
 import bcrypt from "bcrypt";
@@ -33,9 +34,10 @@ passport.use(
       if (!isValidPassword)
         return done(null, false, handleError("Invalid password"));
 
-      await pool.query(UPDATE_LASTLOGIN, [user.id]);
+      await updateDateTime("account", user.id, "lastlogin");
 
       console.log(colors.info(`User ${user.name} is authentificated !`));
+
       return done(null, user);
     } catch (error) {
       loggedHandleError(error);
