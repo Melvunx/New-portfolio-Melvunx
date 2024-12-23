@@ -1,9 +1,9 @@
 import pool from "@/config/database";
+import { displayReactionCount } from "@/utils/handleIds";
 import {
   handleSuccess,
   loggedHandleSuccess,
 } from "@/utils/handleMessageSuccess";
-import { displayReactionCount } from "@/utils/handleIds";
 import {
   Account,
   Reaction,
@@ -18,11 +18,11 @@ const {
   GET_USER_REACTION_LOG,
   GET_ALL_REACTION_LOG_PANELS,
   GET_REACTION_COUNTS_BY_ACCOUNT,
+  ADMIN_ID,
 } = process.env;
 
 export const getUserReactionLog: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
     const user: Account = req.cookies.userCookie;
 
     if (!GET_USER_REACTION_LOG || !GET_REACTION_COUNTS_BY_ACCOUNT) {
@@ -35,13 +35,9 @@ export const getUserReactionLog: RequestHandler = async (req, res) => {
           handleError("Unauthorized or session expired", "Unauthorized access")
         );
       return;
-    } else if (!id) {
-      res.status(400).send(handleError("Id required !", "Missing item !"));
-      return;
     }
 
     const [userReactionLog] = await pool.query(GET_USER_REACTION_LOG, [
-      id,
       user.id,
     ]);
 
@@ -59,10 +55,14 @@ export const getUserReactionLog: RequestHandler = async (req, res) => {
 export const getAllReactionLog: RequestHandler = async (req, res) => {
   try {
     const user: Account = req.cookies.userCookie;
-    if (!GET_ALL_REACTION_LOG_PANELS || !GET_REACTION_COUNTS_BY_ACCOUNT) {
+    if (
+      !GET_ALL_REACTION_LOG_PANELS ||
+      !GET_REACTION_COUNTS_BY_ACCOUNT ||
+      !ADMIN_ID
+    ) {
       res.status(500).send(handleError("Sql request is not defined"));
       return;
-    } else if (!user || user.role_id !== 2) {
+    } else if (!user || user.role_id !== ADMIN_ID) {
       res
         .status(401)
         .send(

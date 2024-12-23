@@ -1,4 +1,7 @@
-import { getAllReactionLog, getUserReactionLog } from "@controller/reactionLog.controller";
+import {
+  getAllReactionLog,
+  getUserReactionLog,
+} from "@controller/reactionLog.controller";
 import { getUserProfile } from "@controller/user.controller";
 import {
   adminAuthentification,
@@ -9,9 +12,14 @@ const router = Router();
 
 // User only
 router.get("/profile", userAuthentification, getUserProfile);
-router.get("/reation-log/:id", userAuthentification, getUserReactionLog);
+router.get("/reation-log", userAuthentification, getUserReactionLog);
 
 // Admin panel
-router.get("/reaction-log/an/panels", userAuthentification, adminAuthentification, getAllReactionLog);
+router.get(
+  "/reaction-log/an/panels",
+  userAuthentification,
+  adminAuthentification,
+  getAllReactionLog
+);
 
 module.exports = router;

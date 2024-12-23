@@ -1,4 +1,6 @@
 import { Account, Reaction } from "@/schema/account.schema";
+import { Generator } from "@/services/generator.services";
+import { checkAffectedRow } from "@/services/handleAffectedRows.services";
 import pool from "@config/database";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
 import {
@@ -6,6 +8,7 @@ import {
   loggedHandleSuccess,
 } from "@utils/handleMessageSuccess";
 import { RequestHandler } from "express";
+import { OkPacketParams, RowDataPacket } from "mysql2";
 
 const {
   GET_REACTIONS,
@@ -13,6 +16,7 @@ const {
   CREATE_REACTION,
   UPDATE_REACTION,
   DELETE_REACTION,
+  ADMIN_ID,
 } = process.env;
 
 export const getReactions: RequestHandler = async (req, res) => {
@@ -61,10 +65,10 @@ export const createNewReaction: RequestHandler<
       reaction: { emoji, action, tooltip },
     } = req.body;
 
-    if (!CREATE_REACTION) {
+    if (!CREATE_REACTION || !ADMIN_ID) {
       res.status(500).send(handleError("Sql request not defined"));
       return;
-    } else if (!user) {
+    } else if (!user || user.role_id !== ADMIN_ID) {
       res
         .status(401)
         .send(
@@ -73,14 +77,17 @@ export const createNewReaction: RequestHandler<
       return;
     }
 
-    await pool.query(CREATE_REACTION, [emoji, action, tooltip]);
+    const generator = new Generator(14);
+    const reactionId = generator.generateIds();
+
+    await pool.query(CREATE_REACTION, [reactionId, emoji, action, tooltip]);
 
     loggedHandleSuccess("Create new reaction", {
-      reaction: { emoji, action, tooltip },
+      reaction: { id: reactionId, emoji, action, tooltip },
     });
     res.status(201).json(
       handleSuccess("Create new reaction", {
-        reaction: { emoji, action, tooltip },
+        reaction: { id: reactionId, emoji, action, tooltip },
       })
     );
   } catch (error) {
@@ -98,10 +105,10 @@ export const updateReaction: RequestHandler = async (req, res) => {
       reaction: { emoji, action, tooltip },
     } = req.body;
 
-    if (!UPDATE_REACTION) {
+    if (!UPDATE_REACTION || !ADMIN_ID) {
       res.status(500).send(handleError("Sql request not defined"));
       return;
-    } else if (!user) {
+    } else if (!user || user.role_id !== ADMIN_ID) {
       res
         .status(401)
         .send(
@@ -134,11 +141,11 @@ export const deleteReaction: RequestHandler = async (req, res) => {
     const user: Account = req.cookies.userCookie;
     const { id } = req.params;
 
-    if (!DELETE_REACTION) {
+    if (!DELETE_REACTION || !ADMIN_ID) {
       res.status(500).send(handleError("Sql request not defined"));
       return;
     }
-    if (!user) {
+    if (!user || user.role_id !== ADMIN_ID) {
       res
         .status(401)
         .send(
@@ -149,9 +156,26 @@ export const deleteReaction: RequestHandler = async (req, res) => {
       res.status(400).send(handleError("Id required !", "Element undefined"));
     }
 
-    await pool.query(DELETE_REACTION, [id]);
+    const [deletedReaction] = await pool.query<
+      RowDataPacket[] & OkPacketParams
+    >(DELETE_REACTION, [id]);
+
+    checkAffectedRow(deletedReaction);
+
     loggedHandleSuccess(`Delete reaction with the id ${id}`);
     res.status(200).json(handleSuccess(`Delete reaction with the id ${id}`));
+  } catch (error) {
+    loggedHandleError(error, "Error caught");
+    res.status(500).send(handleError(error, "Error caught"));
+    return;
+  }
+};
+
+export const reactToElement: RequestHandler = (req, res) => {
+  try {
+    const user: Account = req.cookies.userCookie;
+
+    
   } catch (error) {
     loggedHandleError(error, "Error caught");
     res.status(500).send(handleError(error, "Error caught"));

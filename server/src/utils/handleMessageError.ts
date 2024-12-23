@@ -1,10 +1,16 @@
 import colors from "@/schema/colors.schema";
 
 export const handleError = (error?: any, detail?: string) => {
+  const isErrorObject = error instanceof Error;
   return {
     success: false,
     message: `An error occured ! ${detail ?? ""}`,
-    error: error ?? "Error not filled in",
+    error: isErrorObject
+      ? error.message
+      : error
+      ? error
+      : "Error not filled in",
+    stack: isErrorObject ? error.stack : undefined,
   };
 };
 

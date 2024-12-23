@@ -1,3 +1,5 @@
+import { Generator } from "@/services/generator.services";
+import { checkAffectedRow } from "@/services/handleAffectedRows.services";
 import pool from "@config/database";
 import { Address, Formation } from "@schema/aboutMe.schema";
 import { Account } from "@schema/account.schema";
@@ -18,6 +20,7 @@ const {
   CREATE_ADDRESS,
   UPDATE_ADDRESS,
   DELETE_ADDRESS,
+  ADMIN_ID,
 } = process.env;
 
 export const getFormations: RequestHandler = async (req, res) => {
@@ -73,10 +76,10 @@ export const createNewFormation: RequestHandler<
       formation: { title, description, level, start_date, end_date },
     } = req.body;
 
-    if (!CREATE_FORMATION || !CREATE_ADDRESS) {
+    if (!CREATE_FORMATION || !CREATE_ADDRESS || !ADMIN_ID) {
       res.status(500).send(handleError("Sql request is not defined"));
       return;
-    } else if (!user || user.role_id !== 2) {
+    } else if (!user || user.role_id !== ADMIN_ID) {
       res
         .status(401)
         .send(
@@ -85,23 +88,27 @@ export const createNewFormation: RequestHandler<
       return;
     }
 
+    const generator = new Generator(14);
+    const addressId = generator.generateIds();
+    const formationId = generator.generateIds();
+
     const [newAddress] = await pool.query<RowDataPacket[] & OkPacketParams>(
       CREATE_ADDRESS,
-      [city, department, country]
+      [addressId, city, department, country]
     );
 
-    const address_id = newAddress.insertId;
+    checkAffectedRow(newAddress);
 
     const [newFormation] = await pool.query<RowDataPacket[] & OkPacketParams>(
       CREATE_FORMATION,
-      [title, description, level, start_date, end_date, address_id]
+      [formationId, title, description, level, start_date, end_date, addressId]
     );
 
-    const formation_id = newFormation.insertId;
+    checkAffectedRow(newFormation);
 
     loggedHandleSuccess("New formation added !", {
       formation: {
-        id: formation_id,
+        id: formationId,
         title,
         description,
         level,
@@ -109,7 +116,7 @@ export const createNewFormation: RequestHandler<
         end_date,
       },
       address: {
-        id: address_id,
+        id: addressId,
         city,
         department,
         country,
@@ -119,7 +126,7 @@ export const createNewFormation: RequestHandler<
     res.status(201).json(
       handleSuccess("New formation added !", {
         formation: {
-          id: formation_id,
+          id: formationId,
           title,
           description,
           level,
@@ -127,7 +134,7 @@ export const createNewFormation: RequestHandler<
           end_date,
         },
         address: {
-          id: address_id,
+          id: addressId,
           city,
           department,
           country,
@@ -151,10 +158,10 @@ export const updateFormation: RequestHandler = async (req, res) => {
       formation: { title, description, level, start_date, end_date },
     } = req.body;
 
-    if (!UPDATE_FORMATION || !UPDATE_ADDRESS) {
+    if (!UPDATE_FORMATION || !UPDATE_ADDRESS || !ADMIN_ID) {
       res.status(500).send(handleError("Sql request is not defined"));
       return;
-    } else if (!user || user.role_id !== 2) {
+    } else if (!user || user.role_id !== ADMIN_ID) {
       res
         .status(401)
         .send(
@@ -180,9 +187,16 @@ export const updateFormation: RequestHandler = async (req, res) => {
       return;
     }
 
-    await pool.query(UPDATE_ADDRESS, [city, department, country, add_id]);
+    const [updateAddress] = await pool.query<RowDataPacket[] & OkPacketParams>(
+      UPDATE_ADDRESS,
+      [city, department, country, add_id]
+    );
 
-    await pool.query(UPDATE_FORMATION, [
+    checkAffectedRow(updateAddress);
+
+    const [updateFormation] = await pool.query<
+      RowDataPacket[] & OkPacketParams
+    >(UPDATE_FORMATION, [
       title,
       description,
       level,
@@ -190,6 +204,8 @@ export const updateFormation: RequestHandler = async (req, res) => {
       end_date,
       form_id,
     ]);
+
+    checkAffectedRow(updateFormation);
 
     loggedHandleSuccess("Formation modified", {
       address: { id: add_id, city, department, country },
@@ -229,10 +245,15 @@ export const deleteFormation: RequestHandler = async (req, res) => {
 
     const { add_id, form_id } = req.params;
 
-    if (!DELETE_FORMATION || !DELETE_ADDRESS || !GET_FORMATION_ID) {
+    if (
+      !DELETE_FORMATION ||
+      !DELETE_ADDRESS ||
+      !GET_FORMATION_ID ||
+      !ADMIN_ID
+    ) {
       res.status(500).send(handleError("Sql request is not defined"));
       return;
-    } else if (!user || user.role_id !== 2) {
+    } else if (!user || user.role_id !== ADMIN_ID) {
       res
         .status(401)
         .send(
@@ -249,10 +270,7 @@ export const deleteFormation: RequestHandler = async (req, res) => {
       [add_id]
     );
 
-    if (deletedAddress.affectedRows === 0) {
-      res.status(500).send(handleError("failed to deleted this address"));
-      return;
-    }
+    checkAffectedRow(deletedAddress);
 
     console.log("Address deleted! Check experience in progress...");
 
@@ -269,10 +287,7 @@ export const deleteFormation: RequestHandler = async (req, res) => {
         DELETE_FORMATION,
         [form_id]
       );
-      if (deletedForm.affectedRows === 0) {
-        res.status(500).send(handleError("failed to deleted this experience"));
-        return;
-      }
+      checkAffectedRow(deletedForm);
       console.log("Formation deleted !");
     }
 

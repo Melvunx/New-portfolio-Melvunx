@@ -3,7 +3,7 @@ import { RowDataPacket } from "mysql2";
 
 const { GET_REACTION_COUNTS_BY_ACCOUNT } = process.env;
 
-export const displayReactionCount = async (accountId: number) => {
+export const displayReactionCount = async (accountId: string) => {
   try {
     if (!GET_REACTION_COUNTS_BY_ACCOUNT) {
       throw new Error("Sql resquest not defined");
@@ -16,7 +16,7 @@ export const displayReactionCount = async (accountId: number) => {
     );
 
     if (reactionCounts.length === 0) {
-      return { total_reactions: "No results" };
+      return { total_reactions: "No result found" };
     }
 
     return reactionCounts.map(({ reaction_id, total_reactions }) => ({

@@ -1,6 +1,8 @@
 import pool from "@config/database";
 import { Address, Experience } from "@schema/aboutMe.schema";
 import { Account } from "@schema/account.schema";
+import { Generator } from "@services/generator.services";
+import { checkAffectedRow } from "@services/handleAffectedRows.services";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
 import {
   handleSuccess,
@@ -18,6 +20,7 @@ const {
   CREATE_ADDRESS,
   UPDATE_ADDRESS,
   DELETE_ADDRESS,
+  ADMIN_ID,
 } = process.env;
 
 export const getExperiences: RequestHandler = async (req, res) => {
@@ -72,10 +75,10 @@ export const createNewExperience: RequestHandler<
       experience: { title, task, skills },
     } = req.body;
 
-    if (!CREATE_EXPERIENCE || !CREATE_ADDRESS) {
+    if (!CREATE_EXPERIENCE || !CREATE_ADDRESS || !ADMIN_ID) {
       res.status(500).send(handleError("Sql request is not defined"));
       return;
-    } else if (!user || user.role_id !== 2) {
+    } else if (!user || user.role_id !== ADMIN_ID) {
       res
         .status(401)
         .send(
@@ -87,28 +90,35 @@ export const createNewExperience: RequestHandler<
       return;
     }
 
+    const generator = new Generator(14);
+    const addressId = generator.generateIds();
+    const experienceId = generator.generateIds();
+
     const [newAddress] = await pool.query<RowDataPacket[] & OkPacketParams>(
       CREATE_ADDRESS,
-      [city, department, country]
+      [addressId, city, department, country]
     );
 
-    const address_id = newAddress.insertId;
+    checkAffectedRow(newAddress);
 
     const [newExperience] = await pool.query<RowDataPacket[] & OkPacketParams>(
       CREATE_EXPERIENCE,
-      [title, task, skills, address_id]
+      [experienceId, title, task, skills, addressId]
     );
 
-    const experience_id = newExperience.insertId;
+    if (newExperience.affectedRows === 0) {
+      res.status(500).send(handleError("Error creating experience"));
+      return;
+    }
 
     loggedHandleSuccess("New experience added!", {
-      experience: { id: experience_id, title, task, skills },
-      address: { id: address_id, city, department, country },
+      experience: { id: experienceId, title, task, skills },
+      address: { id: addressId, city, department, country },
     });
     res.status(201).json(
       handleSuccess("New experience added!", {
-        experience: { id: experience_id, title, task, skills },
-        address: { id: address_id, city, department, country },
+        experience: { id: experienceId, title, task, skills },
+        address: { id: addressId, city, department, country },
       })
     );
   } catch (error) {
@@ -128,17 +138,10 @@ export const updateExperience: RequestHandler = async (req, res) => {
       experience: { title, task, skills },
     } = req.body;
 
-    if (!UPDATE_EXPERIENCE || !UPDATE_ADDRESS) {
+    if (!UPDATE_EXPERIENCE || !UPDATE_ADDRESS || !ADMIN_ID) {
       res.status(500).send(handleError("Sql request is not defined"));
       return;
-    } else if (!user || user.role_id !== 2) {
-      res
-        .status(401)
-        .send(
-          handleError("Unauthorized or session expired", "Unauthorized access")
-        );
-      return;
-    } else if (!user || user.role_id !== 2) {
+    } else if (!user || user.role_id !== ADMIN_ID) {
       res
         .status(401)
         .send(
@@ -155,9 +158,19 @@ export const updateExperience: RequestHandler = async (req, res) => {
       return;
     }
 
-    await pool.query(UPDATE_ADDRESS, [city, department, country, add_id]);
+    const [updateAddress] = await pool.query<RowDataPacket[] & OkPacketParams>(
+      UPDATE_ADDRESS,
+      [city, department, country, add_id]
+    );
 
-    await pool.query(UPDATE_EXPERIENCE, [title, task, skills, exp_id]);
+    checkAffectedRow(updateAddress);
+
+    const [updateExp] = await pool.query<RowDataPacket[] & OkPacketParams>(
+      UPDATE_EXPERIENCE,
+      [title, task, skills, exp_id]
+    );
+
+    checkAffectedRow(updateExp);
 
     loggedHandleSuccess("Experience modified !", {
       address: { id: add_id, city, department, country },
@@ -182,10 +195,15 @@ export const deleteExperience: RequestHandler = async (req, res) => {
     const { exp_id, add_id } = req.params;
     const user: Account = req.cookies.userCookie;
 
-    if (!DELETE_EXPERIENCE || !DELETE_ADDRESS || !GET_EXPERIENCE_ID) {
+    if (
+      !DELETE_EXPERIENCE ||
+      !DELETE_ADDRESS ||
+      !GET_EXPERIENCE_ID ||
+      !ADMIN_ID
+    ) {
       res.status(500).send(handleError("Sql request is not defined"));
       return;
-    } else if (!user || user.role_id !== 2) {
+    } else if (!user || user.role_id !== ADMIN_ID) {
       res
         .status(401)
         .send(
@@ -202,10 +220,7 @@ export const deleteExperience: RequestHandler = async (req, res) => {
       [add_id]
     );
 
-    if (deletedAddress.affectedRows === 0) {
-      res.status(500).send(handleError("failed to deleted this address"));
-      return;
-    }
+    checkAffectedRow(deletedAddress);
 
     console.log("Address deleted! Check experience in progress...");
 
@@ -220,10 +235,9 @@ export const deleteExperience: RequestHandler = async (req, res) => {
         DELETE_EXPERIENCE,
         [exp_id]
       );
-      if (deletedExp.affectedRows === 0) {
-        res.status(500).send(handleError("failed to deleted this experience"));
-        return;
-      }
+
+      checkAffectedRow(deletedExp);
+
       console.log("Experience deleted !");
     }
 

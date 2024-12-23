@@ -2,6 +2,7 @@ import pool from "@config/database";
 import { Account } from "@schema/account.schema";
 import colors from "@schema/colors.schema";
 import { Generator } from "@services/generator.services";
+import { checkAffectedRow } from "@services/handleAffectedRows.services";
 import "@strategies/google-strategy";
 import "@strategies/local-strategy";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
@@ -9,7 +10,6 @@ import {
   handleSuccess,
   loggedHandleSuccess,
 } from "@utils/handleMessageSuccess";
-import bcrypt from "bcrypt";
 import { RequestHandler } from "express";
 import { OkPacketParams, RowDataPacket } from "mysql2";
 import passport from "passport";
@@ -27,6 +27,9 @@ const {
   SUB_MANAGER_EMAIL,
   SELECT_ALL_USERS,
   CREATE_REACTION_LOG,
+  USER_ID,
+  MODERATOR_ID,
+  ADMIN_ID,
 } = process.env;
 
 export const accountRegister: RequestHandler<{}, {}, Account> = async (
@@ -40,7 +43,10 @@ export const accountRegister: RequestHandler<{}, {}, Account> = async (
       !CREATE_NEW_ACCOUNT ||
       !CHECK_USERNAME ||
       !CHECK_EMAIL ||
-      !CREATE_REACTION_LOG
+      !CREATE_REACTION_LOG ||
+      !USER_ID ||
+      !MODERATOR_ID ||
+      !ADMIN_ID
     ) {
       res.status(500).send(handleError("Sql request not defined"));
       return;
@@ -52,6 +58,7 @@ export const accountRegister: RequestHandler<{}, {}, Account> = async (
     const [checkUsername] = await pool.query<RowDataPacket[]>(CHECK_USERNAME, [
       username,
     ]);
+
     const [checkEmail] = await pool.query<RowDataPacket[]>(CHECK_EMAIL, [
       email,
     ]);
@@ -62,67 +69,60 @@ export const accountRegister: RequestHandler<{}, {}, Account> = async (
           "Username or Email already used",
           "Username or Email field"
         ),
-        data: { checkUsername, checkEmail },
+        data: { username: checkUsername, email: checkEmail },
       });
       return;
     }
 
-    let userRole: number;
+    let role: string;
     if (
       (username === ADMIN_USERNAME && email === ADMIN_EMAIL) ||
       (username === ADMIN_USERNAME_BACKUP && email === ADMIN_EMAIL_BACKUP) ||
       (username === SUB_MANAGER_USERNAME && email === SUB_MANAGER_EMAIL)
     )
-      userRole = 2;
-    else userRole = 1;
+      role = ADMIN_ID;
+    else role = USER_ID;
 
-    const salt = await bcrypt.genSalt(Number(SALT_ROUNDS) || 10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const generator = new Generator(14);
+    const userId = generator.generateIds();
+    const userReactionLogId = generator.generateIds();
+    const hashedPassword = await generator.generateHasshedPassword(password);
 
     const [newAccount] = await pool.query<RowDataPacket[] & OkPacketParams>(
       CREATE_NEW_ACCOUNT,
-      [username, email, hashedPassword, name, lastname, userRole]
+      [userId, username, email, hashedPassword, name, lastname, role]
     );
 
-    const newAccountId = newAccount.insertId;
-
-    if (!newAccountId) {
-      res.status(500).send(handleError("Failed to create new account"));
-      return;
-    }
-
-    const generetor = new Generator(12);
-    const generatedId = generetor.generateIds();
+    checkAffectedRow(newAccount);
 
     const [userReactionLog] = await pool.query<
       RowDataPacket[] & OkPacketParams
-    >(CREATE_REACTION_LOG, [generatedId, newAccountId]);
+    >(CREATE_REACTION_LOG, [userReactionLogId, userId]);
 
-    if (userReactionLog.affectedRows === 0) {
-      res.status(500).send(handleError("Failed to create user reaction log"));
-      return;
-    }
+    checkAffectedRow(userReactionLog);
 
     loggedHandleSuccess("new Account created", {
+      id: userId,
       username,
       email,
       password: hashedPassword,
       name,
       lastname,
-      role_id: userRole,
+      role_id: role,
     });
 
     res.status(201).json(
       handleSuccess("New  Account created", {
         new_account: {
+          id: userId,
           username,
           email,
           password: hashedPassword,
           name,
           lastname,
-          role_id: userRole,
+          role_id: role,
         },
-        user_reaction_log: { id: generatedId, account_id: newAccountId },
+        user_reaction_log: { id: userReactionLogId, account_id: userId },
       })
     );
   } catch (error) {
@@ -193,9 +193,7 @@ export const userController: RequestHandler = async (req, res) => {
   }
 
   try {
-    const [users] = await pool.query<RowDataPacket[] & Account[]>(
-      SELECT_ALL_USERS
-    );
+    const [users] = await pool.query(SELECT_ALL_USERS);
 
     loggedHandleSuccess("All user", users);
     res.status(200).json(handleSuccess("All user", users));
@@ -209,7 +207,7 @@ export const googleLogin: RequestHandler = (req, res, next) => {
   passport.authenticate(
     "google",
     (
-      error: string,
+      error: any,
       user: Account,
       info: { success: boolean; message: string; error: any }
     ) => {
