@@ -15,6 +15,7 @@ const {
   CALLBACK_URL,
   CHECK_GOOGLE_EMAIL,
   CREATE_NEW_ACCOUNT,
+  USER_ID,
 } = process.env;
 
 passport.use(
@@ -31,7 +32,7 @@ passport.use(
         const { id, email, given_name, family_name, email_verified, verified } =
           profile;
 
-        if (!CHECK_GOOGLE_EMAIL || !CREATE_NEW_ACCOUNT)
+        if (!CHECK_GOOGLE_EMAIL || !CREATE_NEW_ACCOUNT || !USER_ID)
           return done(handleError(new Error("Sql request not defined")), null);
 
         if (!email)
@@ -54,8 +55,9 @@ passport.use(
         );
 
         if (googleAccount.length > 0) {
-          console.log(`Account found ! Hello ${googleAccount.username} !`);
-          return done(null, googleAccount);
+          console.log(`Account found ! Hello ${googleAccount[0].username} !`);
+          await updateDateTime("account", googleAccount[0].id, "lastlogin");
+          return done(null, googleAccount[0]);
         }
 
         console.log("Email not found... Creation new account...");
@@ -74,21 +76,20 @@ passport.use(
           hashedPassword,
           given_name,
           family_name,
-          1,
+          USER_ID,
         ]);
 
         checkAffectedRow(newGoogleAccount);
 
-        await updateDateTime("account", accountId, "lastlogin");
-
         console.log(colors.info(`New User created! Welcome ${given_name}`));
+        await updateDateTime("account", accountId, "lastlogin");
 
         return done(null, {
           id: accountId,
           username: `user_${id}`,
+          email,
           name: given_name,
           lastname: family_name,
-          email,
         });
       } catch (error) {
         return done(error, null);

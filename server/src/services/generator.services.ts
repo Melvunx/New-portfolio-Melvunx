@@ -1,4 +1,3 @@
-import colors from "@schema/colors.schema";
 import bcrypt from "bcrypt";
 
 const { SALT_ROUNDS } = process.env;
@@ -38,7 +37,7 @@ export class Generator {
       id += idSelector[Math.floor(Math.random() * idSelector.length)];
     }
 
-    console.log(colors.info(`Generate id : _${id}`));
+    console.log(`generated id : _${id}`);
 
     return `_${id}`;
   }
@@ -57,16 +56,12 @@ export class Generator {
         passportSelector[Math.floor(Math.random() * passportSelector.length)];
     }
 
-    console.log(colors.info(`Generate passport : ${password}`));
-
     return password;
   }
 
   generateHasshedPassword(password: string) {
     const salt = bcrypt.genSaltSync(Number(SALT_ROUNDS) || 10);
     const hashedPassword = bcrypt.hashSync(password, salt);
-
-    console.log(colors.info(`Generate hashed password : ${hashedPassword}`));
 
     return hashedPassword;
   }

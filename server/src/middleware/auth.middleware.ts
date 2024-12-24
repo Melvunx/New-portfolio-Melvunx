@@ -3,6 +3,8 @@ import colors from "@/schema/colors.schema";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
 import { RequestHandler } from "express";
 
+const { USER_ID, MODERATOR_ID, ADMIN_ID } = process.env;
+
 export const userAuthentification: RequestHandler = (req, res, next) => {
   const user: Account = req.cookies.userCookie;
   console.log("Authentification in progress...");
@@ -43,8 +45,15 @@ export const userAuthentification: RequestHandler = (req, res, next) => {
 
 export const moderatorAuthentification: RequestHandler = (req, res, next) => {
   const user: Account = req.cookies.userCookie;
-
-  if (!user) {
+  if (!USER_ID || !MODERATOR_ID || !ADMIN_ID) {
+    loggedHandleError("Missing environment variables");
+    res
+      .status(500)
+      .send(
+        handleError("Missing environment variables", "Internal server error")
+      );
+    return;
+  } else if (!user) {
     loggedHandleError("User not found or session expired");
     res
       .status(401)
@@ -57,15 +66,15 @@ export const moderatorAuthentification: RequestHandler = (req, res, next) => {
     return;
   }
   switch (user.role_id) {
-    case 1: // Utilisateur
+    case USER_ID:
       loggedHandleError("Unauthorized", "You aren't the right");
       res.status(403).send(handleError("Unauthorized", "You aren't the right"));
       return;
-    case 2: // Administrateur
-      console.log(`Administrator ${user.username} is authentificated !`);
-      return next();
-    case 3: // Modérateur
+    case MODERATOR_ID:
       console.log(`Moderator ${user.username} is authentificated !`);
+      return next();
+    case ADMIN_ID:
+      console.log(`Administrator ${user.username} is authentificated !`);
       return next();
     default:
       loggedHandleError("Unknown user role");
@@ -81,7 +90,15 @@ export const moderatorAuthentification: RequestHandler = (req, res, next) => {
 export const adminAuthentification: RequestHandler = (req, res, next) => {
   const user: Account = req.cookies.userCookie;
 
-  if (!user) {
+  if (!ADMIN_ID) {
+    loggedHandleError("Missing environment variables");
+    res
+      .status(500)
+      .send(
+        handleError("Missing environment variables", "Internal server error")
+      );
+    return;
+  } else if (!user) {
     loggedHandleError("User not found or session expired");
     res
       .status(401)
@@ -92,7 +109,7 @@ export const adminAuthentification: RequestHandler = (req, res, next) => {
         )
       );
     return;
-  } else if (user.role_id !== 2) {
+  } else if (user.role_id !== ADMIN_ID) {
     loggedHandleError("Unauthorized", "You aren't the right");
     res.status(401).send(handleError("Unauthorized"));
     return;

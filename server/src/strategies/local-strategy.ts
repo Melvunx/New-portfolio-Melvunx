@@ -8,20 +8,21 @@ import { RowDataPacket } from "mysql2";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 
-const { CHECK_LOGIN, UPDATE_LASTLOGIN } = process.env;
+const { CHECK_LOGIN } = process.env;
 
 passport.use(
   "local",
   new LocalStrategy(async (username, password, done) => {
-    if (!CHECK_LOGIN || !UPDATE_LASTLOGIN)
+    if (!CHECK_LOGIN)
       return done(null, false, handleError("Sql request is not defined"));
 
     try {
-      const [user] = await pool.query<RowDataPacket[] & Account>(CHECK_LOGIN, [
-        username,
-      ]);
+      const [user] = await pool.query<RowDataPacket[] & Account[]>(
+        CHECK_LOGIN,
+        [username]
+      );
 
-      if (user.length === 0) {
+      if (user[0].length === 0) {
         return done(
           null,
           false,
@@ -30,15 +31,15 @@ passport.use(
       }
       console.log(colors.info("User verification..."));
 
-      const isValidPassword = await bcrypt.compare(password, user.password);
+      const isValidPassword = await bcrypt.compare(password, user[0].password);
       if (!isValidPassword)
         return done(null, false, handleError("Invalid password"));
 
-      await updateDateTime("account", user.id, "lastlogin");
+      await updateDateTime("account", user[0].id, "lastlogin");
 
-      console.log(colors.info(`User ${user.name} is authentificated !`));
+      console.log(colors.info(`User ${user[0].name} is authentificated !`));
 
-      return done(null, user);
+      return done(null, user[0]);
     } catch (error) {
       loggedHandleError(error);
       done(error, false);

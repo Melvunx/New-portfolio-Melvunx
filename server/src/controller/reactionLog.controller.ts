@@ -1,11 +1,9 @@
 import pool from "@/config/database";
+import { Experience, Formation } from "@/schema/aboutMe.schema";
+import { Project } from "@/schema/project.schema";
 import { Generator } from "@/services/generator.services";
 import { checkAffectedRow } from "@/services/handleAffectedRows.services";
 import { displayReactionCount } from "@/utils/handleIds";
-import {
-  handleSuccess,
-  loggedHandleSuccess,
-} from "@/utils/handleMessageSuccess";
 import {
   Account,
   Reaction,
@@ -13,6 +11,10 @@ import {
   ReactionTarget,
 } from "@schema/account.schema";
 import { handleError, loggedHandleError } from "@utils/handleMessageError";
+import {
+  handleSuccess,
+  loggedHandleSuccess,
+} from "@utils/handleMessageSuccess";
 import { RequestHandler } from "express";
 import { OkPacketParams, RowDataPacket } from "mysql2";
 
@@ -23,6 +25,9 @@ const {
   GET_REACTION_COUNTS_BY_ACCOUNT,
   ADD_REACTION_LOG,
   REMOVE_REACTION_LOG,
+  SELECT_TARGET_PROJECT,
+  SELECT_TARGET_EXPERIENCE,
+  SELECT_TARGET_FORMATION,
 } = process.env;
 
 export const getUserReactionLog: RequestHandler = async (req, res) => {
@@ -114,19 +119,17 @@ export const getAllReactionLog: RequestHandler = async (req, res) => {
   }
 };
 
-export const reactToElement: RequestHandler<
-  { reaction_id: string; target_id: string },
-  {},
-  { reactionlog: ReactionLog }
-> = async (req, res) => {
+export const reactToElement: RequestHandler = async (req, res) => {
   try {
     const user: Account = req.cookies.userCookie;
     const { reaction_id, target_id } = req.params;
-    const {
-      reactionlog: { target_type_id },
-    } = req.body;
 
-    if (!ADD_REACTION_LOG) {
+    if (
+      !ADD_REACTION_LOG ||
+      !SELECT_TARGET_PROJECT ||
+      !SELECT_TARGET_EXPERIENCE ||
+      !SELECT_TARGET_FORMATION
+    ) {
       res
         .status(500)
         .send(handleError("Sql request not defined", "Undefined element"));
@@ -136,15 +139,75 @@ export const reactToElement: RequestHandler<
       return;
     }
 
+    let target_name: string;
+
+    console.log(`Checking the id ${target_id} in the project table...`);
+    const [checkProjectId] = await pool.query<RowDataPacket[] & Project>(
+      SELECT_TARGET_PROJECT,
+      [target_id]
+    );
+
+    if (checkProjectId.length === 0) {
+      console.log(
+        "Project not found. Checking the id in the experience table..."
+      );
+      const [checkExperienceId] = await pool.query<
+        RowDataPacket[] & Experience
+      >(SELECT_TARGET_EXPERIENCE, [target_id]);
+
+      if (checkExperienceId.length === 0) {
+        console.log(
+          "Experience not found. Checking the id in the formation table..."
+        );
+        const [checkFormationId] = await pool.query<
+          RowDataPacket[] & Formation
+        >(SELECT_TARGET_FORMATION, [target_id]);
+
+        if (checkFormationId.length === 0) {
+          loggedHandleError("Id is unknow !", "Element not found");
+          res.status(404).send(handleError("Not found", "Element not found"));
+          return;
+        }
+
+        target_name = checkFormationId.target_type_id;
+      }
+
+      target_name = checkExperienceId.target_type_id;
+    }
+
+    target_name = checkProjectId.target_type_id;
+
     const generator = new Generator(14);
     const reactionLogId = generator.generateIds();
 
     const [newReactionLog] = await pool.query<RowDataPacket[] & OkPacketParams>(
       ADD_REACTION_LOG,
-      [reactionLogId, user.id, target_type_id, reaction_id, target_id]
+      [reactionLogId, user.id, target_name, reaction_id, target_id]
     );
 
     checkAffectedRow(newReactionLog);
+
+    loggedHandleSuccess("Reaction added !", {
+      reactionLog: {
+        id: reactionLogId,
+        account_id: user.id,
+        target_name,
+        reaction_id,
+        target_id,
+      },
+    });
+
+    res.status(201).json(
+      handleSuccess("Reaction added !", {
+        reactionLog: {
+          id: reactionLogId,
+          account_id: user.id,
+          target_name,
+          reaction_id,
+          target_id,
+        },
+      })
+    );
   } catch (error) {
     loggedHandleError(error, "Error caught");
     res.status(500).send(handleError(error, "Error caught"));
@@ -154,6 +217,33 @@ export const reactToElement: RequestHandler<
 
 export const removeReactionFromElement: RequestHandler = async (req, res) => {
   try {
+    const user: Account = req.cookies.userCookie;
+    const { id } = req.params;
+
+    if (!REMOVE_REACTION_LOG) {
+      res
+        .status(500)
+        .send(handleError("Sql request not defined", "Undefined element"));
+      return;
+    } else if (!user) {
+      res.status(401).send(handleError("Unauthorized", "Unauthorized"));
+      return;
+    } else if (!id) {
+      res.status(400).send(handleError("Missing id", "Missing id"));
+      return;
+    }
+
+    const [removeReaction] = await pool.query<RowDataPacket[] & OkPacketParams>(
+      REMOVE_REACTION_LOG,
+      [id]
+    );
+
+    checkAffectedRow(removeReaction);
+
+    loggedHandleSuccess("Reaction removed !", { reactionLogId: id });
+    res
+      .status(200)
+      .json(handleSuccess("Reaction removed !", { reactionLogId: id }));
   } catch (error) {
     loggedHandleError(error, "Error caught");
     res.status(500).send(handleError(error, "Error caught"));

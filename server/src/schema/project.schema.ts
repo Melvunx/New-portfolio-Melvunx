@@ -5,7 +5,7 @@ export const ProjectSchema = z.object({
   title: z.string(),
   description: z.string(),
   project_status_id: z.string(),
-  reaction_target_id: z.string(),
+  target_type_id: z.string(),
   production_url: z.string().optional(),
   github_url: z.string(),
   image_url: z.string().optional(),

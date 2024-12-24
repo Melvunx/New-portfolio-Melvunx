@@ -26,10 +26,20 @@ export const getReactions: RequestHandler = async (req, res) => {
       return;
     }
 
-    const [reactions] = await pool.query(GET_REACTIONS);
+    const [reactions] = await pool.query<RowDataPacket[] & Reaction>(
+      GET_REACTIONS
+    );
 
-    loggedHandleSuccess("Get all reactions", reactions);
-    res.status(200).json(handleSuccess("Get all reactions", { reactions }));
+    loggedHandleSuccess("Get all reactions", {
+      number_reaction: reactions.length,
+      reactions,
+    });
+    res.status(200).json(
+      handleSuccess("Get all reactions", {
+        number_reaction: reactions.length,
+        reactions,
+      })
+    );
   } catch (error) {
     loggedHandleError(error, "Error caught");
     res.status(500).send(handleError(error, "Error caught"));

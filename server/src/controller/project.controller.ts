@@ -74,6 +74,18 @@ export const createNewProject: RequestHandler<
   try {
     const user: Account = req.cookies.userCookie;
 
+    const {
+      project: {
+        title,
+        description,
+        project_status_id,
+        github_url,
+        production_url,
+        image_url,
+        video_url,
+      },
+    } = req.body;
+
     if (!CREATE_NEW_PROJECT || !ADMIN_ID) {
       res
         .status(500)
@@ -87,18 +99,6 @@ export const createNewProject: RequestHandler<
         );
       return;
     }
-
-    const {
-      project: {
-        title,
-        description,
-        project_status_id,
-        github_url,
-        production_url,
-        image_url,
-        video_url,
-      },
-    } = req.body;
 
     if (!title || !description || !project_status_id || !github_url) {
       res.status(400).send(handleError("Missing required fields"));
