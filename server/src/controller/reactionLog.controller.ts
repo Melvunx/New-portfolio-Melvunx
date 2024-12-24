@@ -139,43 +139,47 @@ export const reactToElement: RequestHandler = async (req, res) => {
       return;
     }
 
-    let target_name: string;
+    let target_name: string | null = null;
 
     console.log(`Checking the id ${target_id} in the project table...`);
-    const [checkProjectId] = await pool.query<RowDataPacket[] & Project>(
+    const [checkProjectId] = await pool.query<RowDataPacket[] & Project[]>(
       SELECT_TARGET_PROJECT,
       [target_id]
     );
 
-    if (checkProjectId.length === 0) {
-      console.log(
-        "Project not found. Checking the id in the experience table..."
-      );
-      const [checkExperienceId] = await pool.query<
-        RowDataPacket[] & Experience
-      >(SELECT_TARGET_EXPERIENCE, [target_id]);
-
-      if (checkExperienceId.length === 0) {
-        console.log(
-          "Experience not found. Checking the id in the formation table..."
-        );
-        const [checkFormationId] = await pool.query<
-          RowDataPacket[] & Formation
-        >(SELECT_TARGET_FORMATION, [target_id]);
-
-        if (checkFormationId.length === 0) {
-          loggedHandleError("Id is unknow !", "Element not found");
-          res.status(404).send(handleError("Not found", "Element not found"));
-          return;
-        }
-
-        target_name = checkFormationId.target_type_id;
-      }
-
-      target_name = checkExperienceId.target_type_id;
+    if (checkProjectId.length > 0) {
+      target_name = checkProjectId[0].target_type_id;
+      console.log("Project found !");
     }
 
-    target_name = checkProjectId.target_type_id;
+    console.log("Project not found, checking the experience table...");
+    const [checkExperienceId] = await pool.query<RowDataPacket[] & Experience>(
+      SELECT_TARGET_EXPERIENCE,
+      [target_id]
+    );
+
+    if (checkExperienceId.length > 0) {
+      target_name = checkExperienceId[0].target_type_id;
+      console.log("Experience found !");
+    }
+    console.log("Experience not found. Checking formation table...");
+    const [checkFormationId] = await pool.query<RowDataPacket[] & Formation>(
+      SELECT_TARGET_FORMATION,
+      [target_id]
+    );
+
+    if (checkFormationId.length > 0) {
+      target_name = checkFormationId[0].target_type_id;
+      console.log("Formation found !");
+    }
+
+    if (target_name === null) {
+      loggedHandleError("Target name not found", "Target name is null");
+      res
+        .status(404)
+        .send(handleError("Target name not found", "Target name is null"));
+      return;
+    }
 
     const generator = new Generator(14);
     const reactionLogId = generator.generateIds();

@@ -14,7 +14,7 @@ const router = Router();
 
 // User only
 router.get("/profile", userAuthentification, getUserProfile);
-router.get("/reation-log", userAuthentification, getUserReactionLog);
+router.get("/reaction-log", userAuthentification, getUserReactionLog);
 
 // Admin panel
 router.get(
@@ -29,7 +29,7 @@ router.post("/add/reaction-log/:reaction_id/:target_id", userAuthentification, r
 
 // Remove a reaction
 router.delete(
-  "/remove/reacion-log",
+  "/remove/reaction-log",
   userAuthentification,
   removeReactionFromElement
 );

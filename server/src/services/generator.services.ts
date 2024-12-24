@@ -1,3 +1,4 @@
+import colors from "@/schema/colors.schema";
 import bcrypt from "bcrypt";
 
 const { SALT_ROUNDS } = process.env;
@@ -37,7 +38,7 @@ export class Generator {
       id += idSelector[Math.floor(Math.random() * idSelector.length)];
     }
 
-    console.log(`generated id : _${id}`);
+    console.log(colors.info(`generated id : _${id}`));
 
     return `_${id}`;
   }

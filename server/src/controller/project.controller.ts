@@ -1,4 +1,5 @@
 import { Project } from "@/schema/project.schema";
+import { Generator } from "@/services/generator.services";
 import { checkAffectedRow } from "@/services/handleAffectedRows.services";
 import { updateDateTime } from "@/services/handleDateTime.services";
 import pool from "@config/database";
@@ -16,7 +17,6 @@ const {
   GET_PROJECT_ID,
   CREATE_NEW_PROJECT,
   MODIFY_PROJECT,
-  UPDATE_DATE,
   DELETE_PROJECT,
   ADMIN_ID,
 } = process.env;
@@ -105,9 +105,13 @@ export const createNewProject: RequestHandler<
       return;
     }
 
+    const generator = new Generator(14);
+    const projectId = generator.generateIds();
+
     const [newProject] = await pool.query<RowDataPacket[] & OkPacketParams>(
       CREATE_NEW_PROJECT,
       [
+        projectId,
         title,
         description,
         project_status_id,
