@@ -1,5 +1,5 @@
 require("dotenv").config();
-import colors from "@/schema/colors.schema";
+import colors from "@schema/colors.schema";
 import pool from "@config/database";
 import { Account } from "@schema/account.schema";
 import "@strategies/google-strategy";

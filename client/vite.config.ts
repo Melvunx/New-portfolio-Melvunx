@@ -14,4 +14,7 @@ export default defineConfig({
       "@pages": path.resolve(__dirname, "./src/pages"),
     },
   },
+  esbuild: {
+    jsxInject: `import React from 'react'`,
+  },
 });

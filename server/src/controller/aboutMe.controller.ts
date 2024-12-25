@@ -1,13 +1,12 @@
-import { AboutMe } from "@/schema/aboutMe.schema";
+import pool from "@config/database";
+import { AboutMe } from "@schema/aboutMe.schema";
+import { handleError, loggedHandleError } from "@utils/handleMessageError";
 import {
   handleSuccess,
   loggedHandleSuccess,
-} from "@/utils/handleMessageSuccess";
-import pool from "@config/database";
-import { handleError } from "@utils/handleMessageError";
+} from "@utils/handleMessageSuccess";
 import { RequestHandler } from "express";
 import { RowDataPacket } from "mysql2";
-import { loggedHandleError } from "../utils/handleMessageError";
 
 const { SELECT_ABOUTME } = process.env;
 

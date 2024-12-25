@@ -1,4 +1,4 @@
-import { getAllSenders, postEmail } from "@controller/emailing.controller";
+import { postEmail } from "@/controller/email.controller";
 import {
   moderatorAuthentification,
   userAuthentification,
@@ -7,12 +7,7 @@ import { Router } from "express";
 const router = Router();
 
 // Get all messages
-router.get(
-  "/senders",
-  userAuthentification,
-  moderatorAuthentification,
-  getAllSenders
-);
+router.get("/senders", userAuthentification, moderatorAuthentification);
 
 // Post messages
 router.post("/new-email", postEmail);
