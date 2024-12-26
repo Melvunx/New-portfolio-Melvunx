@@ -7,6 +7,7 @@ export const AccountSchema = z.object({
   password: z.string(),
   name: z.string(),
   lastname: z.string(),
+  verified: z.number(),
   cretedAt: z.date(),
   lastlogin: z.date(),
   role_id: z.string(),
@@ -17,7 +18,7 @@ export type Account = z.infer<typeof AccountSchema>;
 export const AccountsSchema = z.array(AccountSchema);
 
 export const AccountResponseSchema = z.object({
-  account: z.array(AccountSchema),
+  account: AccountSchema,
 });
 
 export const AccountsResponseSchema = z.object({

@@ -60,17 +60,21 @@ export const postEmail: RequestHandler<{}, {}, { letter: Letter }> = async (
         message,
         acountId: user ? user.id : undefined,
       },
+      email_status: newEmail,
     });
-    res.status(201).json(handleSuccess("Email send !", {
-      email: {
-        id: letterId,
-        sender,
-        object,
-        email,
-        message,
-        acountId: user ? user.id : undefined,
-      },
-    }));
+    res.status(201).json(
+      handleSuccess("Email send !", {
+        email: {
+          id: letterId,
+          sender,
+          object,
+          email,
+          message,
+          acountId: user ? user.id : undefined,
+        },
+        email_status: newEmail,
+      })
+    );
   } catch (error) {
     loggedHandleError(error, "Caught error");
     res.status(500).json(handleError(error));

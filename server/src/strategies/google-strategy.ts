@@ -15,6 +15,7 @@ const {
   CALLBACK_URL,
   CHECK_GOOGLE_EMAIL,
   CREATE_NEW_ACCOUNT,
+  SET_VERIFY_TRUE,
   USER_ID,
 } = process.env;
 
@@ -32,7 +33,12 @@ passport.use(
         const { id, email, given_name, family_name, email_verified, verified } =
           profile;
 
-        if (!CHECK_GOOGLE_EMAIL || !CREATE_NEW_ACCOUNT || !USER_ID)
+        if (
+          !CHECK_GOOGLE_EMAIL ||
+          !CREATE_NEW_ACCOUNT ||
+          !SET_VERIFY_TRUE ||
+          !USER_ID
+        )
           return done(handleError(new Error("Sql request not defined")), null);
 
         if (!email)
@@ -49,7 +55,7 @@ passport.use(
 
         console.log("Email checking...");
 
-        const [googleAccount] = await pool.query<RowDataPacket[] & Account>(
+        const [googleAccount] = await pool.query<RowDataPacket[] & Account[]>(
           CHECK_GOOGLE_EMAIL,
           [email]
         );
@@ -57,6 +63,13 @@ passport.use(
         if (googleAccount.length > 0) {
           console.log(`Account found ! Hello ${googleAccount[0].username} !`);
           await updateDateTime("account", googleAccount[0].id, "lastlogin");
+          if (googleAccount[0].verified === 0) {
+            const [updateVerifiedAccount] = await pool.query<
+              RowDataPacket[] & OkPacketParams
+            >(SET_VERIFY_TRUE, [googleAccount[0].id]);
+
+            checkAffectedRow(updateVerifiedAccount);
+          }
           return done(null, googleAccount[0]);
         }
 
@@ -83,6 +96,12 @@ passport.use(
 
         console.log(colors.info(`New User created! Welcome ${given_name}`));
         await updateDateTime("account", accountId, "lastlogin");
+
+        const [updateVerifiedAccount] = await pool.query<
+          RowDataPacket[] & OkPacketParams
+        >(SET_VERIFY_TRUE, [accountId]);
+
+        checkAffectedRow(updateVerifiedAccount);
 
         return done(null, {
           id: accountId,

@@ -51,7 +51,7 @@ export const accountRegister: RequestHandler<
       res.status(500).send(handleError("Sql request not defined"));
       return;
     } else if (!username || !email || !password || !name || !lastname) {
-      res.status(400).send(handleError("Missing fields"));
+      res.status(400).send(handleError("Missing fields", "Undefined element"));
       return;
     }
 
@@ -120,8 +120,9 @@ export const accountRegister: RequestHandler<
       })
     );
   } catch (error) {
-    loggedHandleError(error);
-    res.status(500).send(handleError(error));
+    loggedHandleError(error, "Caught error");
+    res.status(500).send(handleError(error, "Caught error"));
+    return;
   }
 };
 
@@ -187,10 +188,12 @@ export const userController: RequestHandler = async (req, res) => {
   }
 
   try {
-    const [users] = await pool.query(SELECT_ALL_USERS);
+    const [accounts] = await pool.query<RowDataPacket[] & Account[]>(
+      SELECT_ALL_USERS
+    );
 
-    loggedHandleSuccess("All user", users);
-    res.status(200).json(handleSuccess("All user", users));
+    loggedHandleSuccess("All user", { accounts });
+    res.status(200).json(handleSuccess("All user", { accounts }));
   } catch (error) {
     res.status(500).send(handleError(error, "Failed to fetch users"));
     return;

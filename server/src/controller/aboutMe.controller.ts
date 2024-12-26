@@ -10,7 +10,7 @@ import { RowDataPacket } from "mysql2";
 
 const { SELECT_ABOUTME } = process.env;
 
-export const getInfoAboutMe: RequestHandler = async (req, res) => {
+export const getInfoAboutMe: RequestHandler<{}, {}, {}> = async (req, res) => {
   try {
     if (!SELECT_ABOUTME) {
       res
