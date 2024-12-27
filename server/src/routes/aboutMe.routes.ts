@@ -1,4 +1,4 @@
-import { createNewInfoAboutMe, getInfoAboutMe } from "@controller/aboutMe.controller";
+import { createNewInfoAboutMe, deleteAboutMe, editAboutMe, getInfoAboutMe } from "@controller/aboutMe.controller";
 import {
   adminAuthentification,
   userAuthentification,
@@ -21,8 +21,8 @@ router.post(
   createNewInfoAboutMe
 );
 
-router.patch("/info/:id", userAuthentification, adminAuthentification);
+router.patch("/info/:id", userAuthentification, adminAuthentification, editAboutMe);
 
-router.delete("/info/:id", userAuthentification, adminAuthentification);
+router.delete("/info/:id", userAuthentification, adminAuthentification, deleteAboutMe);
 
 module.exports = router;

@@ -16,6 +16,10 @@ const {
   CREATE_ABOUT_ME,
   CREATE_ON_GOING_FORMATION,
   CREATE_ADDRESS,
+  UPDATE_ABOUT_ME,
+  UPDATE_ADDRESS,
+  UPDATE_ON_GOING_FORMATION,
+  DELETE_ABOUT_ME,
 } = process.env;
 
 export const getInfoAboutMe: RequestHandler<{}, {}, {}> = async (req, res) => {
@@ -174,6 +178,7 @@ export const createNewInfoAboutMe: RequestHandler<
       },
       aboutMe: { id: aboutMeId, linkedIn_url, introduction_text, github_url },
     });
+
     res.status(201).send(
       handleSuccess("AboutMe added !", {
         aboutMe_address: {
@@ -199,6 +204,48 @@ export const createNewInfoAboutMe: RequestHandler<
         aboutMe: { id: aboutMeId, linkedIn_url, introduction_text, github_url },
       })
     );
+  } catch (error) {
+    loggedHandleError(error, "Error caught");
+    res.status(500).send(handleError(error, "Error caught"));
+    return;
+  }
+};
+
+export const editAboutMe: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user: Account = req.cookies.userCookie;
+
+    if (!UPDATE_ADDRESS || !UPDATE_ON_GOING_FORMATION || !UPDATE_ABOUT_ME) {
+      res
+        .status(500)
+        .send(handleError(new Error("Sql request is not defined")));
+      return;
+    } else if (!user) {
+      res.status(401).send(handleError("User not found or session expired"));
+      return;
+    } else if (!id) {
+      res.status(400).send(handleError("Id is required"));
+      return;
+    }
+
+    const [updateAddressAbout] = await pool.query<
+      RowDataPacket[] & OkPacketParams
+    >(UPDATE_ABOUT_ME);
+
+    checkAffectedRow(updateAddressAbout);
+
+
+  } catch (error) {
+    loggedHandleError(error, "Error caught");
+    res.status(500).send(handleError(error, "Error caught"));
+    return;
+  }
+};
+
+export const deleteAboutMe: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
   } catch (error) {
     loggedHandleError(error, "Error caught");
     res.status(500).send(handleError(error, "Error caught"));
