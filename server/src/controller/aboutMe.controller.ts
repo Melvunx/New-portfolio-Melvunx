@@ -22,6 +22,8 @@ const {
   DELETE_ABOUT_ME,
 } = process.env;
 
+const generator = new Generator(14);
+
 export const getInfoAboutMe: RequestHandler<{}, {}, {}> = async (req, res) => {
   try {
     if (!SELECT_ABOUT_ME) {
@@ -97,7 +99,6 @@ export const createNewInfoAboutMe: RequestHandler<
       return;
     }
 
-    const generator = new Generator(14);
     const onGoingFormation_addressId = generator.generateIds();
     const aboutMe_addressId = generator.generateIds();
     const aboutMeId = generator.generateIds();

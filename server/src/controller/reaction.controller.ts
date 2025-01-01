@@ -19,6 +19,8 @@ const {
   ADMIN_ID,
 } = process.env;
 
+const generator = new Generator(14);
+
 export const getReactions: RequestHandler = async (req, res) => {
   try {
     if (!GET_REACTIONS) {
@@ -87,7 +89,7 @@ export const createNewReaction: RequestHandler<
       return;
     }
 
-    const generator = new Generator(14);
+    
     const reactionId = generator.generateIds();
 
     await pool.query(CREATE_REACTION, [reactionId, emoji, action, tooltip]);

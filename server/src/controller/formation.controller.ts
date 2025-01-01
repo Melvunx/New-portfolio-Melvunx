@@ -24,6 +24,9 @@ const {
   ADMIN_ID,
 } = process.env;
 
+const generator = new Generator(14);
+
+
 export const getFormations: RequestHandler = async (req, res) => {
   try {
     if (!GET_FORMATION) {
@@ -89,7 +92,6 @@ export const createNewFormation: RequestHandler<
       return;
     }
 
-    const generator = new Generator(14);
     const addressId = generator.generateIds();
     const formationId = generator.generateIds();
 

@@ -30,6 +30,8 @@ const {
   ADMIN_ID,
 } = process.env;
 
+const generator = new Generator(14);
+
 export const accountRegister: RequestHandler<
   {},
   {},
@@ -83,7 +85,6 @@ export const accountRegister: RequestHandler<
       role = ADMIN_ID;
     else role = USER_ID;
 
-    const generator = new Generator(14);
     const userId = generator.generateIds();
     const hashedPassword = await generator.generateHasshedPassword(password);
 

@@ -14,6 +14,8 @@ import pool from "../config/database";
 
 const { RESEND_API_KEY, MY_EMAIL, INSERT_LETTER } = process.env;
 
+const generator = new Generator(14);
+
 const resend = new Resend(RESEND_API_KEY);
 
 export const postEmail: RequestHandler<{}, {}, { letter: Letter }> = async (
@@ -34,7 +36,6 @@ export const postEmail: RequestHandler<{}, {}, { letter: Letter }> = async (
       letter: { sender, object, email, message },
     } = req.body;
 
-    const generator = new Generator(14);
     const letterId = generator.generateIds();
 
     const [createdEmail] = await pool.query<RowDataPacket[] & OkPacketParams>(

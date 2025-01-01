@@ -24,6 +24,8 @@ const {
   ADMIN_ID,
 } = process.env;
 
+const generator = new Generator(14);
+
 export const getExperiences: RequestHandler = async (req, res) => {
   try {
     if (!GET_EXPERIENCES) {
@@ -91,7 +93,7 @@ export const createNewExperience: RequestHandler<
       return;
     }
 
-    const generator = new Generator(14);
+    
     const addressId = generator.generateIds();
     const experienceId = generator.generateIds();
 

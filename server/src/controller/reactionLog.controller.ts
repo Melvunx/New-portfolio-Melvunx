@@ -30,6 +30,8 @@ const {
   SELECT_TARGET_FORMATION,
 } = process.env;
 
+const generator = new Generator(14);
+
 export const getUserReactionLog: RequestHandler = async (req, res) => {
   try {
     const user: Account = req.cookies.userCookie;
@@ -181,7 +183,6 @@ export const reactToElement: RequestHandler = async (req, res) => {
       return;
     }
 
-    const generator = new Generator(14);
     const reactionLogId = generator.generateIds();
 
     const [newReactionLog] = await pool.query<RowDataPacket[] & OkPacketParams>(

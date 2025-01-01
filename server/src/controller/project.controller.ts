@@ -21,6 +21,9 @@ const {
   ADMIN_ID,
 } = process.env;
 
+const generator = new Generator(14);
+
+
 export const getProjects: RequestHandler = async (req, res) => {
   try {
     if (!GET_PROJECTS) {
@@ -105,7 +108,6 @@ export const createNewProject: RequestHandler<
       return;
     }
 
-    const generator = new Generator(14);
     const projectId = generator.generateIds();
 
     const [newProject] = await pool.query<RowDataPacket[] & OkPacketParams>(
