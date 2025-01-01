@@ -1,12 +1,11 @@
-import Home from "@pages/Home";
-import { Route, Routes } from "react-router-dom";
+import { ModeToggle } from "./components/mode-toggle";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/home" element={<Home />} />
-      <Route path="*" element={<Home />} />
-    </Routes>
+    <>
+      <h1 className="text-center">Test</h1>
+      <ModeToggle />
+    </>
   );
 }
 
