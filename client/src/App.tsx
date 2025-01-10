@@ -1,12 +1,12 @@
-import { ModeToggle } from "./components/mode-toggle";
+import Auth from "@pages/Auth";
+import Home from "@pages/Home";
+import { Route, Routes } from "react-router-dom";
 
-function App() {
+export default function App() {
   return (
-    <>
-      <h1 className="text-center">Test</h1>
-      <ModeToggle />
-    </>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/auth" element={<Auth />} />
+    </Routes>
   );
 }
-
-export default App;
