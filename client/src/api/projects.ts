@@ -44,3 +44,11 @@ export async function editProject(
     console.error(error);
   }
 }
+
+export async function deleteProject(projectId: string) {
+  try{
+    await fetchApi(`/project/${projectId}`);
+  } catch(error){
+    console.error(error);
+  }
+}
