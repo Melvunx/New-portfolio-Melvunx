@@ -1,7 +1,7 @@
 require("dotenv").config();
-import colors from "@schema/colors.schema";
 import pool from "@config/database";
 import { Account } from "@schema/account.schema";
+import colors from "@schema/colors.schema";
 import "@strategies/google-strategy";
 import "@strategies/local-strategy";
 import cookieParser from "cookie-parser";
@@ -44,7 +44,12 @@ const sessionStore = new MySQLStore({
   },
 });
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());

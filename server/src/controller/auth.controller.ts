@@ -146,7 +146,7 @@ export const passportLogin: RequestHandler = (req, res, next) => {
         // loggedHandleSuccess(`User ${user.username} logged in !`);
         res.cookie("userCookie", user, { maxAge: 360000 });
 
-        return res.status(200).json(handleSuccess("Loggin successful", user));
+        return res.status(200).json(user);
       });
     }
   )(req, res, next);

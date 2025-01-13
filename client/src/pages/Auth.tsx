@@ -1,19 +1,33 @@
+import { ModeToggle } from "@/components/mode-toggle";
 import { SubmitButton } from "@/components/SubmitButtton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Auth() {
+  const { login } = useAuth();
+
+  const onLoginAction = async (data: FormData) => {
+    const username = String(data.get("username"));
+    const password = String(data.get("password"));
+
+    await login(username, password);
+  };
+
   return (
     <Tabs defaultValue="signup">
-      <TabsList className="mx-auto flex w-1/3 items-center justify-between">
+      <TabsList className="mx-auto flex w-2/5 items-center justify-evenly gap-4">
         <TabsTrigger className="w-full" value="signup">
           Sign up
         </TabsTrigger>
         <TabsTrigger className="w-full" value="signin">
           Sign in
         </TabsTrigger>
+        <div className="bg-transparent">
+          <ModeToggle />
+        </div>
       </TabsList>
       <TabsContent value="signup">
         <Card className="mx-auto flex w-2/3 flex-col">
@@ -21,7 +35,10 @@ export default function Auth() {
             <CardTitle>Sign Up</CardTitle>
           </CardHeader>
           <CardContent>
-            <form className="flex flex-col items-center justify-center gap-6">
+            <form
+              action={onLoginAction}
+              className="flex flex-col items-center justify-center gap-6"
+            >
               <div className="">
                 <Label htmlFor="user">Username</Label>
                 <Input id="user" name="username" />
@@ -36,12 +53,12 @@ export default function Auth() {
         </Card>
       </TabsContent>
       <TabsContent value="signin">
-        <Card>
+        <Card className="mx-auto flex w-2/3 flex-col">
           <CardHeader>
             <CardTitle>Sign in</CardTitle>
           </CardHeader>
           <CardContent>
-            <form className="flex flex-col ">
+            <form className="flex flex-col items-center justify-center gap-6">
               <div className="">
                 <Label htmlFor="name">Name</Label>
                 <Input id="name" name="name" />

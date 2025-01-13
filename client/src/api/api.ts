@@ -4,12 +4,15 @@ class ApiError extends Error {
   }
 }
 
-export const fecthApi = async <T>(
+export const fetchApi = async <T>(
   url: string,
-  { payload, method }: { payload: Record<string, unknown>; method?: string }
+  {
+    payload,
+    method,
+  }: { payload?: Record<string, unknown>; method?: string } = {}
 ): Promise<T> => {
   method ??= payload ? "POST" : "GET";
-  const request = await fetch("http://:localhost:3000/api" + url, {
+  const request = await fetch(`http://localhost:3000/api${url}`, {
     method,
     credentials: "include",
     body: payload ? JSON.stringify(payload) : undefined,
@@ -23,5 +26,5 @@ export const fecthApi = async <T>(
     const errorData = await request.json();
     throw new ApiError(request.status, errorData);
   }
-  return (await request.json()) as T;
+  return (await request.json()) as Promise<T>;
 };

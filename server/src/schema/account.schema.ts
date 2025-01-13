@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+export const ErrorResponseSchema = z.object({
+  success: z.literal(false),
+  message: z.string(),
+  error: z.union([z.string(), z.object({})]),
+  stack: z.string().optional(),
+});
+
+export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
+
 export const AccountSchema = z.object({
   id: z.string(),
   username: z.string(),
@@ -8,18 +17,31 @@ export const AccountSchema = z.object({
   name: z.string(),
   lastname: z.string(),
   verified: z.number(),
-  cretedAt: z.date(),
-  lastlogin: z.date(),
+  cretedAt: z.string(),
+  lastlogin: z.string().nullable(),
   role_id: z.string(),
 });
 
 export type Account = z.infer<typeof AccountSchema>;
 
-export const AccountsSchema = z.array(AccountSchema);
-
 export const AccountResponseSchema = z.object({
-  account: AccountSchema,
+  success: z.literal(true),
+  message: z.string(),
+  data: z.object({
+    account: AccountSchema,
+  }),
 });
+
+export type AccountResponse = z.infer<typeof AccountResponseSchema>;
+
+export const ApiResponseAccountSchema = z.union([
+  AccountResponseSchema,
+  ErrorResponseSchema,
+]);
+
+export type ApiResponseAccount = z.infer<typeof ApiResponseAccountSchema>;
+
+export const AccountsSchema = z.array(AccountSchema);
 
 export const AccountsResponseSchema = z.object({
   accounts: AccountsSchema,
