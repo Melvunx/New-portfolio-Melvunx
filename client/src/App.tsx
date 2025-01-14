@@ -19,6 +19,10 @@ const router = createBrowserRouter([
     path: "/profile",
     element: <Profile />,
   },
+  {
+    path: "/project",
+    element: <Project />
+  }
 ]);
 
 export default function App() {
