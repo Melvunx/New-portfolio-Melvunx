@@ -7,13 +7,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function Auth() {
-  const { login } = useAuth();
+  const { register, login } = useAuth();
 
   const onLoginAction = async (data: FormData) => {
     const username = String(data.get("username"));
     const password = String(data.get("password"));
 
     await login(username, password);
+  };
+
+  const onRegisterAction = async (data: FormData) => {
+    const username = String(data.get("username"));
+    const email = String(data.get("email"));
+    const password = String(data.get("password"));
+    const name = String(data.get("name"));
+    const lastname = String(data.get("lastname"));
+
+    await register(username, email, password, name, lastname);
   };
 
   return (
@@ -58,7 +68,10 @@ export default function Auth() {
             <CardTitle>Sign in</CardTitle>
           </CardHeader>
           <CardContent>
-            <form className="flex flex-col items-center justify-center gap-6">
+            <form
+              action={onRegisterAction}
+              className="flex flex-col items-center justify-center gap-6"
+            >
               <div className="">
                 <Label htmlFor="name">Name</Label>
                 <Input id="name" name="name" />
