@@ -1,6 +1,6 @@
 import { fetchApi } from "@/api/api";
 import { useAccountStore } from "@/api/store";
-import { Account, AccountResponse } from "@server/schema/account.schema";
+import { Account } from "@server/schema/account.schema";
 import { useCallback } from "react";
 
 export enum authStatus {
@@ -24,18 +24,18 @@ export function useAuth() {
       break;
   }
 
-  const authenticate = useCallback(() => {
-    fetchApi<AccountResponse>("/user/profile")
-      .then((res) => {
-        const { account } = res.data;
-        return account;
-      })
-      .then(setAccount)
-      .catch(() => setAccount(null));
+  const authenticate = useCallback(async () => {
+    try {
+      const account = await fetchApi<Account>("/user/profile");
+      setAccount(account);
+    } catch (error) {
+      setAccount(null);
+      console.error(error);
+    }
   }, [setAccount]);
 
   const register = useCallback(
-    (
+    async (
       username: string,
       email: string,
       password: string,

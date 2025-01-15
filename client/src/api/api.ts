@@ -12,7 +12,7 @@ export const fetchApi = async <T>(
   }: { payload?: Record<string, unknown>; method?: string } = {}
 ): Promise<T> => {
   method ??= payload ? "POST" : "GET";
-  const request = await fetch(`http://localhost:3000/api${url}`, {
+  const r = await fetch(`http://localhost:3000/api${url}`, {
     method,
     credentials: "include",
     body: payload ? JSON.stringify(payload) : undefined,
@@ -21,10 +21,18 @@ export const fetchApi = async <T>(
       "Content-Type": "application/json",
     },
   });
+  const json = await r.json();
 
-  if (!request.ok) {
-    const errorData = await request.json();
-    throw new ApiError(request.status, errorData);
+  if (!r.ok) {
+    throw new ApiError(r.status, json);
   }
-  return (await request.json()) as Promise<T>;
+
+  console.log("The json after fetching : ", json);
+
+  if (json.success && json.data) {
+    console.log(json.message);
+    return json.data as T;
+  }
+
+  return json;
 };

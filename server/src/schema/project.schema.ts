@@ -19,11 +19,21 @@ export type Project = z.infer<typeof ProjectSchema>;
 export const ProjectsSchema = z.array(ProjectSchema);
 
 export const ProjectsResponseSchema = z.object({
-  projects: ProjectsSchema,
+  success: z.literal(true),
+  message: z.string(),
+  data: z.object({
+    projects: ProjectsSchema,
+  }),
 });
 
+export type ProjectsResponse = z.infer<typeof ProjectsResponseSchema>;
+
 export const ProjectResponseSchema = z.object({
-  project: z.array(ProjectSchema),
+  success: z.literal(true),
+  message: z.string(),
+  data: z.object({
+    project: ProjectSchema,
+  }),
 });
 
 export const ProjectStatusSchema = z.object({

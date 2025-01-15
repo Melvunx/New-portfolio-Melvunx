@@ -1,13 +1,11 @@
 import { useAccount } from "@/hooks/useAccount";
 import { useAuth } from "@/hooks/useAuth";
 import { formateDate } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 
 export default function Profile() {
   const { account } = useAccount();
   const { logout } = useAuth();
-  const navigate = useNavigate();
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -16,7 +14,10 @@ export default function Profile() {
         <li>Username: {account.username}</li>
         <li>email: {account.email}</li>
         <li>Last name: {account.lastname}</li>
-        <li>verfied account: {account.verified}</li>
+        <li>
+          verfied account:{" "}
+          {account.verified === 1 ? "Compte vérifié !" : "Compte non vérifié"}
+        </li>
         <li>
           Last login:{" "}
           {account.lastlogin
@@ -29,7 +30,8 @@ export default function Profile() {
         className="italic"
         onClick={() => {
           logout();
-          return navigate("/");
+          new Promise((r) => setTimeout(() => r, 1500));
+          window.location.reload();
         }}
       >
         Logout

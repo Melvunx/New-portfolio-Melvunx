@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Profile from "./components/Profile";
 import { ThemeProvider } from "./components/theme-provider";
 import NotFoundPage from "./pages/NotFoundPage";
+import Project from "./pages/Projets";
 
 const router = createBrowserRouter([
   {
