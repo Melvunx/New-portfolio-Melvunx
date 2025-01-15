@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import { GetFilters } from "./projects";
 
-type ProjectStore = {
+type FilterStore = {
   filters?: GetFilters;
   setFilters: (filters?: GetFilters) => void;
 };
@@ -19,7 +19,7 @@ export const useAccountStore = create(
   )
 );
 
-export const useProjectStore = create<ProjectStore>((set) => ({
+export const useProjectFilterStore = create<FilterStore>((set) => ({
   filters: undefined,
   setFilters: (filters?: GetFilters) => set({ filters }),
 }));

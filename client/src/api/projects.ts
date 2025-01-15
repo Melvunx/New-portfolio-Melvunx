@@ -6,7 +6,7 @@ export type GetFilters = {
   page?: number;
 };
 
-export const getProjects = async () => {
+export async function getProjects() {
   try {
     const r = await fetchApi<Project[]>("/project");
     const validatedData = ProjectsSchema.parse(r);
@@ -14,11 +14,37 @@ export const getProjects = async () => {
   } catch (error) {
     console.error(error);
   }
-};
+}
 
 export async function getProjectById(projectId: string) {
   try {
     const r = await fetchApi<Project>(`/project/${projectId}`);
+    const validatedData = ProjectSchema.parse(r);
+    return validatedData;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+export async function addProject(
+  title: string,
+  description: string,
+  production_url: string,
+  github_url: string,
+  image_url: string,
+  video_url: string
+) {
+  try {
+    const r = await fetchApi<Project>("/project/new-project", {
+      payload: {
+        title,
+        description,
+        production_url,
+        github_url,
+        image_url,
+        video_url,
+      },
+    });
     const validatedData = ProjectSchema.parse(r);
     return validatedData;
   } catch (error) {

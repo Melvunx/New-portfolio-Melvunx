@@ -14,11 +14,12 @@ const router = Router();
 
 // Get projects
 router.get("/", getProjects);
+
 router.get("/:id", getProjectId);
 
 // Post projects
 router.post(
-  "/an/new-project",
+  "/new-project",
   userAuthentification,
   adminAuthentification,
   createNewProject
@@ -26,7 +27,7 @@ router.post(
 
 // Patch projects
 router.patch(
-  "/an/:id",
+  "/:id",
   userAuthentification,
   adminAuthentification,
   updateProject
@@ -34,7 +35,7 @@ router.patch(
 
 // Delete projects
 router.delete(
-  "/an/:id",
+  "/:id",
   userAuthentification,
   adminAuthentification,
   deleteProject

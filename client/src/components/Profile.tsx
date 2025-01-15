@@ -1,11 +1,14 @@
 import { useAccount } from "@/hooks/useAccount";
 import { useAuth } from "@/hooks/useAuth";
 import { formateDate } from "@/lib/utils";
+import { LoaderCircleIcon } from "lucide-react";
+import { useTransition } from "react";
 import { Button } from "./ui/button";
 
 export default function Profile() {
   const { account } = useAccount();
   const { logout } = useAuth();
+  const [isPending, startTransition] = useTransition();
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -27,14 +30,18 @@ export default function Profile() {
       </ul>
 
       <Button
-        className="italic"
+        className="flex gap-3 italic"
+        disabled={isPending}
         onClick={() => {
-          logout();
-          new Promise((r) => setTimeout(() => r, 1500));
-          window.location.reload();
+          startTransition(async () => {
+            return new Promise((resolve) =>
+              setTimeout(() => resolve(logout()), 1000)
+            );
+          });
         }}
       >
         Logout
+        {isPending ? <LoaderCircleIcon className="animate-spin" /> : ""}
       </Button>
     </div>
   );

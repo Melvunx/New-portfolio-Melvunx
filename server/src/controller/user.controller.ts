@@ -34,10 +34,8 @@ export const getUserProfile: RequestHandler = async (req, res) => {
       [user.id]
     );
 
-    loggedHandleSuccess("Display user's profile", { account: userProfile[0] });
-    res
-      .status(200)
-      .json(handleSuccess("User profile", { account: userProfile[0] }));
+    loggedHandleSuccess("Display user's profile", userProfile[0]);
+    res.status(200).json(handleSuccess("User profile", userProfile[0]));
   } catch (error) {
     loggedHandleError(error, "Error caught");
     res.status(500).send(handleError(error, "Error caught"));

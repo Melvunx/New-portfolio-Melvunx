@@ -137,16 +137,15 @@ export const passportLogin: RequestHandler = (req, res, next) => {
     ) => {
       if (error) return res.status(500).send(info);
       if (!user) return res.status(401).send(info);
+      
 
-      // loggedHandleSuccess("Verification user...");
       req.logIn(user, (loginErr) => {
         if (loginErr)
           return res.status(500).send(handleError(loginErr, "Error on login"));
 
-        // loggedHandleSuccess(`User ${user.username} logged in !`);
         res.cookie("userCookie", user, { maxAge: 360000 });
 
-        return res.status(200).json(user);
+        return res.status(200).json(handleSuccess("get User", user));
       });
     }
   )(req, res, next);

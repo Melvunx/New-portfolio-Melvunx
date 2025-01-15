@@ -27,6 +27,7 @@ export function useAuth() {
   const authenticate = useCallback(async () => {
     try {
       const account = await fetchApi<Account>("/user/profile");
+      
       setAccount(account);
     } catch (error) {
       setAccount(null);
@@ -42,26 +43,40 @@ export function useAuth() {
       name: string,
       lastname: string
     ) => {
-      fetchApi<Account>("/auth/register", {
-        payload: { account: { username, email, password, name, lastname } },
-      })
-        .then(setAccount)
-        .catch(() => setAccount(null));
+      try {
+        const account = await fetchApi<Account>("/auth/register", {
+          payload: { account: { username, email, password, name, lastname } },
+        });
+        setAccount(account);
+      } catch (error) {
+        console.error(error);
+      }
     },
     [setAccount]
   );
 
   const login = useCallback(
-    (username: string, password: string) => {
-      fetchApi<Account>("/auth/login", {
-        payload: { username, password },
-      }).then(setAccount);
+    async (username: string, password: string) => {
+      try {
+        const identifier = await fetchApi<Account>("/auth/login", {
+          payload: { username, password },
+        });
+        setAccount(identifier);
+      } catch (error) {
+        console.error(error);
+        setAccount(null);
+      }
     },
     [setAccount]
   );
 
-  const logout = useCallback(() => {
-    fetchApi<Account>("/auth/logout", { method: "POST" }).then(setAccount);
+  const logout = useCallback(async () => {
+    try {
+      await fetchApi<Account>("/auth/logout", { method: "POST" });
+      setAccount(null);
+    } catch (error) {
+      console.error(error);
+    }
   }, [setAccount]);
 
   return {
