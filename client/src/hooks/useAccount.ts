@@ -4,6 +4,8 @@ export function useAccount() {
   const { account } = useAuth();
   const { VITE_MODERATOR_ID, VITE_ADMIN_ID } = import.meta.env;
 
+  console.log("account from useAccount : ", account);
+
   if (!account) {
     throw new Error("User is not authentificated !");
   }

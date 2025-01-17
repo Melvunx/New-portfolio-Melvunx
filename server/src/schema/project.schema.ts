@@ -10,8 +10,8 @@ export const ProjectSchema = z.object({
   github_url: z.string(),
   image_url: z.string().optional(),
   video_url: z.string().optional(),
-  createdAt: z.date(),
-  updatedAt: z.date().optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime().nullable(),
 });
 
 export type Project = z.infer<typeof ProjectSchema>;

@@ -27,7 +27,6 @@ export function useAuth() {
   const authenticate = useCallback(async () => {
     try {
       const account = await fetchApi<Account>("/user/profile");
-      
       setAccount(account);
     } catch (error) {
       setAccount(null);

@@ -1,9 +1,9 @@
 import Auth from "@pages/Auth";
 import Home from "@pages/Home";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Profile from "./components/Profile";
 import { ThemeProvider } from "./components/theme-provider";
 import NotFoundPage from "./pages/NotFoundPage";
+import Profile from "./components/Profile";
 import Project from "./pages/Projets";
 
 const router = createBrowserRouter([
@@ -22,8 +22,8 @@ const router = createBrowserRouter([
   },
   {
     path: "/project",
-    element: <Project />
-  }
+    element: <Project />,
+  },
 ]);
 
 export default function App() {

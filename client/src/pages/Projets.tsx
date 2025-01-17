@@ -23,16 +23,23 @@ export default function Project() {
   }
 
   return (
-    <div>
+    <div className="relative">
       <NavBar />
-      <h1>Project</h1>
-      <ul className="mx-auto flex w-1/2 flex-col">
-        {projects
-          ? projects.map((project) => (
-              <li key={project.id}>{project.title}</li>
-            ))
-          : "No projects found"}
-      </ul> 
+      <div className="container mx-auto flex min-h-screen flex-col p-4 pt-6 md:p-6 lg:p-12">
+        <h1>Project</h1>
+        <ul className="mx-auto flex w-1/2 flex-col">
+          {projects
+            ? projects.map((project) => (
+                <div className="font-mono">
+                  <li key={project.id}>{project.title}</li>
+                  <li key={project.id}>{project.github_url}</li>
+                  <li key={project.id}>{project.project_status_id}</li>
+                  <li key={project.id}>{project.createdAt}</li>
+                </div>
+              ))
+            : "No projects found"}
+        </ul>
+      </div>
     </div>
   );
 }

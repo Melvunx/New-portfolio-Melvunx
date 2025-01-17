@@ -10,8 +10,10 @@ type NavLinkProps = {
 
 export function NavLink({ to, children, className }: NavLinkProps) {
   return (
-    <Button className={clsx("tracking-wide", className)} variant="outline">
-      <Link to={to}>{children}</Link>
-    </Button>
+    <Link to={to}>
+      <Button className={clsx("tracking-wide", className)} variant="outline">
+        {children}
+      </Button>
+    </Link>
   );
 }

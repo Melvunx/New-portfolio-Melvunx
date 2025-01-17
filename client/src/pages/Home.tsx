@@ -1,9 +1,7 @@
 import { Loading } from "@/components/Loading";
 import { NavBar } from "@/components/NavBar";
-import Profile from "@/components/Profile";
 import { authStatus, useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
-import Auth from "./Auth";
 
 export default function Home() {
   const { status, authenticate } = useAuth();
@@ -19,14 +17,19 @@ export default function Home() {
         <Loading />
       </>
     );
-  } else if (status === authStatus.Guest) {
-    return <Auth />;
-  } else if (status === authStatus.Authentificated) {
+  } else if (
+    status === authStatus.Guest ||
+    status === authStatus.Authentificated
+  ) {
     return (
-      <>
+      <div className="relative">
         <NavBar />
-        <Profile />
-      </>
+        <div className="flex min-h-screen justify-center">
+          <h1 className="flex items-center justify-center text-3xl font-bold text-gray-400">
+            Welcome to my portfolio app ! You can log in !
+          </h1>
+        </div>
+      </div>
     );
   }
 }

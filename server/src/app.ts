@@ -128,10 +128,3 @@ pool
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
-
-// const generator = new Generator(14);
-
-// setInterval(() => {
-//   console.log("---------------------------------------------");
-//   generator.generateIds();
-// }, 1000);
