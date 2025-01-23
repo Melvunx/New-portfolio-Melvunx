@@ -17,8 +17,8 @@ export const fetchApi = async <T>(
     credentials: "include",
     body: payload ? JSON.stringify(payload) : undefined,
     headers: {
-      Accept: "application/json",
       "Content-Type": "application/json",
+      Accept: "application/json",
     },
   });
   const json = await r.json();
