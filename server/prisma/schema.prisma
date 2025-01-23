@@ -1,0 +1,195 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id        String        @id @default(cuid())
+  username  String        @unique
+  email     String        @unique
+  password  String
+  name      String
+  lastname  String
+  verified  Boolean       @default(false)
+  lastLogin DateTime?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  role      Role?
+  letters   Letter[]
+  reactions ReactionLog[]
+}
+
+model Role {
+  id         String   @id @default(cuid())
+  userStatus String
+  account    Account? @relation(fields: [accountId], references: [id])
+  accountId  String   @unique
+}
+
+model Letter {
+  id        String   @id @default(cuid())
+  sender    String
+  objet     String
+  email     String
+  message   String
+  sendAt    DateTime @default(now())
+  account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  accountId String?
+}
+
+model Reaction {
+  id      String        @id @default(cuid())
+  emoji   String
+  action  String
+  tooltip String
+  logs    ReactionLog[]
+}
+
+model Category {
+  id           String       @id @default(cuid())
+  name         String
+  technologies Technology[]
+}
+
+model Address {
+  id                String             @id @default(cuid())
+  city              String
+  department        String
+  country           String
+  postalCode        Int?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  formations        Formation[]
+  experiences       Experience[]
+  ongoingFormations OngoingFormation[]
+  aboutMeEntries    AboutMe[]
+}
+
+model OngoingFormation {
+  id          String    @id @default(cuid())
+  name        String
+  description String
+  rythme      String
+  sector      String
+  duration    Int
+  address     Address   @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  addressId   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  AboutMe     AboutMe[]
+}
+
+model Formation {
+  id           String         @id @default(cuid())
+  title        String
+  description  String
+  level        String
+  startDate    DateTime
+  endDate      DateTime
+  address      Address        @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  addressId    String
+  targetType   ReactionTarget @relation(fields: [targetTypeId], references: [id], onDelete: Cascade)
+  targetTypeId String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model Experience {
+  id           String         @id @default(cuid())
+  title        String
+  tasks        String
+  skills       String
+  address      Address        @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  addressId    String
+  targetType   ReactionTarget @relation(fields: [targetTypeId], references: [id], onDelete: Cascade)
+  targetTypeId String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model Technology {
+  id                  String              @id @default(cuid())
+  name                String
+  category            Category            @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId          String
+  projectTechnologies ProjectTechnology[]
+}
+
+model AboutMe {
+  id                 String           @id @default(cuid())
+  linkedInUrl        String
+  introductionText   String
+  githubUrl          String
+  ongoingFormation   OngoingFormation @relation(fields: [ongoingFormationId], references: [id], onDelete: Cascade)
+  ongoingFormationId String
+  address            Address          @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  addressId          String
+}
+
+model Avatar {
+  id        String @id @default(cuid())
+  avatarUrl String
+}
+
+model ProjectStatus {
+  id                String    @id @default(cuid())
+  statusNameProject String
+  projects          Project[]
+}
+
+model Project {
+  id              String              @id @default(cuid())
+  title           String
+  description     String
+  productionUrl   String?
+  githubUrl       String?
+  imageUrl        String?
+  videoUrl        String?
+  projectStatus   ProjectStatus       @relation(fields: [projectStatusId], references: [id], onDelete: Cascade)
+  projectStatusId String
+  targetType      ReactionTarget      @relation(fields: [targetTypeId], references: [id], onDelete: Cascade)
+  targetTypeId    String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  technologies    ProjectTechnology[]
+}
+
+model ProjectTechnology {
+  technology   Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+  technologyId String
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId    String
+
+  @@id([projectId, technologyId])
+}
+
+model ReactionTarget {
+  id         String        @id @default(cuid())
+  targetName String
+  reactions  ReactionLog[]
+  Formation  Formation[]
+  Experience Experience[]
+  Project    Project[]
+}
+
+model ReactionLog {
+  id           String          @id @default(cuid())
+  account      Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId    String
+  targetType   ReactionTarget? @relation(fields: [targetTypeId], references: [id], onDelete: Cascade)
+  targetTypeId String?
+  reaction     Reaction?       @relation(fields: [reactionId], references: [id], onDelete: Cascade)
+  reactionId   String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
