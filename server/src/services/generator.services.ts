@@ -37,9 +37,9 @@ class Generator {
     return password;
   }
 
-  generateHasshedPassword(password: string) {
-    const salt = bcrypt.genSaltSync(Number(SALT_ROUNDS) || 10);
-    const hashedPassword = bcrypt.hashSync(password, salt);
+  async generateHashedPassword(password: string) {
+    const salt = await bcrypt.genSalt(Number(SALT_ROUNDS) || 10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     return hashedPassword;
   }

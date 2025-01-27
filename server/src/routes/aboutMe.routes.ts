@@ -21,7 +21,7 @@ router.post(
   createNewInfoAboutMe
 );
 
-router.patch("/info/:id", userAuthentification, adminAuthentification, editAboutMe);
+router.patch("/info/:about_meId", userAuthentification, adminAuthentification, editAboutMe);
 
 router.delete("/info/:id", userAuthentification, adminAuthentification, deleteAboutMe);
 

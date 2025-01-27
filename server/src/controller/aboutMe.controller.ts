@@ -1,45 +1,27 @@
-import { Generator } from "@/services/generator.services";
-import { checkAffectedRow } from "@/services/handleAffectedRows.services";
-import pool from "@config/database";
-import { AboutMe, Address, OnGoingFormation } from "@schema/aboutMe.schema";
-import { Account } from "@schema/account.schema";
-import { handleError, loggedHandleError } from "@utils/handleMessageError";
-import {
-  handleSuccess,
-  loggedHandleSuccess,
-} from "@utils/handleMessageSuccess";
+import apiReponse from "@/services/apiResponse";
+import { prisma } from "@config/prisma";
+import { AboutMe, Account, Address, OngoingFormation } from "@prisma/client";
 import { RequestHandler } from "express";
-import { OkPacketParams, RowDataPacket } from "mysql2";
 
-const {
-  SELECT_ABOUT_ME,
-  CREATE_ABOUT_ME,
-  CREATE_ON_GOING_FORMATION,
-  CREATE_ADDRESS,
-  UPDATE_ABOUT_ME,
-  UPDATE_ADDRESS,
-  UPDATE_ON_GOING_FORMATION,
-  DELETE_ABOUT_ME,
-} = process.env;
-
-const generator = new Generator(14);
-
-export const getInfoAboutMe: RequestHandler<{}, {}, {}> = async (req, res) => {
+export const getInfoAboutMe: RequestHandler = async (req, res) => {
   try {
-    if (!SELECT_ABOUT_ME) {
-      res
-        .status(500)
-        .send(handleError(new Error("Sql request is not defined")));
-      return;
-    }
+    const info = await prisma.aboutMe.findFirst({
+      include: {
+        address: true,
+        ongoingFormation: true,
+      },
+    });
 
-    const [info] = await pool.query<RowDataPacket[] & AboutMe>(SELECT_ABOUT_ME);
-    loggedHandleSuccess("Get info", info[0]);
-    res.status(200).json(handleSuccess("Get info", info[0]));
+    if (!info)
+      return apiReponse.error(
+        res,
+        "Not Found",
+        new Error("Info about me not found")
+      );
+
+    return apiReponse.success(res, "Ok", info);
   } catch (error) {
-    loggedHandleError(error, "Error caught");
-    res.status(500).send(handleError(error, "Error caught"));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };
 
@@ -48,38 +30,33 @@ export const createNewInfoAboutMe: RequestHandler<
   {},
   {
     aboutMe: AboutMe;
-    onGoingFormation: OnGoingFormation;
+    onGoingFormation: OngoingFormation;
     aboutMe_address: Address;
     onGoingFormation_Address: Address;
   }
 > = async (req, res) => {
   try {
-    const user: Account = req.cookies.userCookie;
+    const user: Account | undefined = req.cookies.userCookie;
 
     const {
       aboutMe_address: {
         city: aboutMe_city,
         department: aboutMe_department,
         country: aboutMe_country,
+        postalCode: aboutMe_postalCode,
       },
       onGoingFormation_Address: {
         city: onGoingFormation_city,
         department: onGoingFormation_department,
         country: onGoingFormation_country,
+        postalCode: OnGoingFormation_postalCode,
       },
-      aboutMe: { linkedIn_url, introduction_text, github_url },
+      aboutMe: { linkedInUrl, githubUrl, introductionText },
       onGoingFormation: { name, description, rythme, sector, duration },
     } = req.body;
 
-    if (!CREATE_ADDRESS || !CREATE_ON_GOING_FORMATION || !CREATE_ABOUT_ME) {
-      res
-        .status(500)
-        .send(handleError(new Error("Sql request is not defined")));
-      return;
-    } else if (!user) {
-      res.status(401).send(handleError("User not found or session expired"));
-      return;
-    } else if (
+    if (!user) return apiReponse.error(res, "Unauthorized");
+    else if (
       !aboutMe_city ||
       !aboutMe_department ||
       !aboutMe_country ||
@@ -91,165 +68,166 @@ export const createNewInfoAboutMe: RequestHandler<
       !rythme ||
       !sector ||
       !duration ||
-      !introduction_text ||
-      !github_url ||
-      !linkedIn_url
-    ) {
-      res.status(400).send(handleError("Missing fields", "Undefined element"));
-      return;
-    }
+      !introductionText ||
+      !githubUrl ||
+      !linkedInUrl
+    )
+      return apiReponse.error(res, "Bad Request", new Error("Missing fiels"));
 
-    const onGoingFormation_addressId = generator.generateIds();
-    const aboutMe_addressId = generator.generateIds();
-    const aboutMeId = generator.generateIds();
-    const onGoingFormationId = generator.generateIds();
+    const infoAboutMe = await prisma.aboutMe.create({
+      data: {
+        introductionText,
+        githubUrl,
+        linkedInUrl,
+        address: {
+          create: {
+            city: aboutMe_city,
+            department: aboutMe_department,
+            country: aboutMe_country,
+            postalCode: aboutMe_postalCode ?? null,
+          },
+        },
+        ongoingFormation: {
+          create: {
+            name,
+            description,
+            rythme,
+            sector,
+            duration,
+            address: {
+              create: {
+                city: onGoingFormation_city,
+                department: onGoingFormation_department,
+                country: onGoingFormation_country,
+                postalCode: OnGoingFormation_postalCode ?? null,
+              },
+            },
+          },
+        },
+      },
+    });
 
-    const [newAddressOng] = await pool.query<RowDataPacket[] & OkPacketParams>(
-      CREATE_ADDRESS,
-      [
-        onGoingFormation_addressId,
-        onGoingFormation_city,
-        onGoingFormation_department,
-        onGoingFormation_country,
-      ]
-    );
+    return apiReponse.success(res, "Created", infoAboutMe);
+  } catch (error) {
+    return apiReponse.error(res, "Internal Server Error", error);
+  }
+};
 
-    checkAffectedRow(newAddressOng);
-
-    const [newAddressAbout] = await pool.query<
-      RowDataPacket[] & OkPacketParams
-    >(CREATE_ADDRESS, [
-      aboutMe_addressId,
-      aboutMe_city,
-      aboutMe_department,
-      aboutMe_country,
-    ]);
-
-    checkAffectedRow(newAddressAbout);
-
-    const [newFormation] = await pool.query<RowDataPacket[] & OkPacketParams>(
-      CREATE_ON_GOING_FORMATION,
-      [
-        onGoingFormationId,
-        name,
-        description,
-        rythme,
-        sector,
-        duration,
-        onGoingFormation_addressId,
-      ]
-    );
-
-    checkAffectedRow(newFormation);
-
-    const [newAboutMe] = await pool.query<RowDataPacket[] & OkPacketParams>(
-      CREATE_ABOUT_ME,
-      [
-        aboutMeId,
-        linkedIn_url,
-        introduction_text,
-        github_url,
-        onGoingFormationId,
-        aboutMe_addressId,
-      ]
-    );
-
-    checkAffectedRow(newAboutMe);
-
-    loggedHandleSuccess("AboutMe added !", {
+export const editAboutMe: RequestHandler<
+  { about_meId: string },
+  {},
+  {
+    aboutMe: AboutMe;
+    onGoingFormation: OngoingFormation;
+    aboutMe_address: Address;
+    onGoingFormation_Address: Address;
+  }
+> = async (req, res) => {
+  try {
+    const { about_meId } = req.params;
+    const user: Account | undefined = req.cookies.userCookie;
+    const {
       aboutMe_address: {
-        id: aboutMe_addressId,
         city: aboutMe_city,
         department: aboutMe_department,
         country: aboutMe_country,
+        postalCode: aboutMe_postalCode,
       },
       onGoingFormation_Address: {
-        id: onGoingFormation_addressId,
         city: onGoingFormation_city,
         department: onGoingFormation_department,
         country: onGoingFormation_country,
+        postalCode: OnGoingFormation_postalCode,
       },
-      onGoingFormation: {
-        id: onGoingFormationId,
-        name,
-        description,
-        rythme,
-        sector,
-        duration,
+      aboutMe: { linkedInUrl, githubUrl, introductionText },
+      onGoingFormation: { name, description, rythme, sector, duration },
+    } = req.body;
+
+    if (!user) return apiReponse.error(res, "Unauthorized");
+    else if (!about_meId)
+      return apiReponse.error(res, "Not Found", new Error("Id not found"));
+    else if (
+      !aboutMe_city ||
+      !aboutMe_department ||
+      !aboutMe_country ||
+      !onGoingFormation_city ||
+      !onGoingFormation_department ||
+      !onGoingFormation_country ||
+      !name ||
+      !description ||
+      !rythme ||
+      !sector ||
+      !duration ||
+      !introductionText ||
+      !githubUrl ||
+      !linkedInUrl
+    )
+      return apiReponse.error(res, "Bad Request", new Error("Missing fiels"));
+
+    const updatedInfo = await prisma.aboutMe.update({
+      where: { id: about_meId },
+      data: {
+        introductionText,
+        githubUrl,
+        linkedInUrl,
+        address: {
+          create: {
+            city: aboutMe_city,
+            department: aboutMe_department,
+            country: aboutMe_country,
+            postalCode: aboutMe_postalCode ?? null,
+          },
+        },
+        ongoingFormation: {
+          create: {
+            name,
+            description,
+            rythme,
+            sector,
+            duration,
+            address: {
+              create: {
+                city: onGoingFormation_city,
+                department: onGoingFormation_department,
+                country: onGoingFormation_country,
+                postalCode: OnGoingFormation_postalCode ?? null,
+              },
+            },
+          },
+        },
       },
-      aboutMe: { id: aboutMeId, linkedIn_url, introduction_text, github_url },
     });
 
-    res.status(201).send(
-      handleSuccess("AboutMe added !", {
-        aboutMe_address: {
-          id: aboutMe_addressId,
-          city: aboutMe_city,
-          department: aboutMe_department,
-          country: aboutMe_country,
-        },
-        onGoingFormation_Address: {
-          id: onGoingFormation_addressId,
-          city: onGoingFormation_city,
-          department: onGoingFormation_department,
-          country: onGoingFormation_country,
-        },
-        onGoingFormation: {
-          id: onGoingFormationId,
-          name,
-          description,
-          rythme,
-          sector,
-          duration,
-        },
-        aboutMe: { id: aboutMeId, linkedIn_url, introduction_text, github_url },
-      })
+    return apiReponse.success(res, "Ok", updatedInfo);
+  } catch (error) {
+    return apiReponse.error(res, "Internal Server Error", error);
+  }
+};
+
+export const deleteAboutMe: RequestHandler<{ about_meId: string }> = async (
+  req,
+  res
+) => {
+  try {
+    const { about_meId } = req.params;
+    const user: Account | undefined = req.cookies.userCookie;
+    if (!user) return apiReponse.error(res, "Unauthorized");
+    else if (!about_meId)
+      return apiReponse.error(res, "Not Found", new Error("Id not found"));
+
+    const info = await prisma.aboutMe.delete({
+      where: {
+        id: about_meId,
+      },
+    });
+
+    return apiReponse.success(
+      res,
+      "Ok",
+      null,
+      `The info ${info.githubUrl} is deleted`
     );
   } catch (error) {
-    loggedHandleError(error, "Error caught");
-    res.status(500).send(handleError(error, "Error caught"));
-    return;
-  }
-};
-
-export const editAboutMe: RequestHandler = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const user: Account = req.cookies.userCookie;
-
-    if (!UPDATE_ADDRESS || !UPDATE_ON_GOING_FORMATION || !UPDATE_ABOUT_ME) {
-      res
-        .status(500)
-        .send(handleError(new Error("Sql request is not defined")));
-      return;
-    } else if (!user) {
-      res.status(401).send(handleError("User not found or session expired"));
-      return;
-    } else if (!id) {
-      res.status(400).send(handleError("Id is required"));
-      return;
-    }
-
-    const [updateAddressAbout] = await pool.query<
-      RowDataPacket[] & OkPacketParams
-    >(UPDATE_ABOUT_ME);
-
-    checkAffectedRow(updateAddressAbout);
-
-
-  } catch (error) {
-    loggedHandleError(error, "Error caught");
-    res.status(500).send(handleError(error, "Error caught"));
-    return;
-  }
-};
-
-export const deleteAboutMe: RequestHandler = async (req, res) => {
-  try {
-    const { id } = req.params;
-  } catch (error) {
-    loggedHandleError(error, "Error caught");
-    res.status(500).send(handleError(error, "Error caught"));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };

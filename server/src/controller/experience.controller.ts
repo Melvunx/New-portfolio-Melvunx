@@ -1,68 +1,48 @@
-import pool from "@config/database";
-import { Address, Experience } from "@schema/aboutMe.schema";
-import { Account } from "@schema/account.schema";
-import { Generator } from "@services/generator.services";
-import { checkAffectedRow } from "@services/handleAffectedRows.services";
-import { updateDateTime } from "@services/handleDateTime.services";
-import { handleError, loggedHandleError } from "@utils/handleMessageError";
-import {
-  handleSuccess,
-  loggedHandleSuccess,
-} from "@utils/handleMessageSuccess";
+import { prisma } from "@/config/prisma";
+import apiReponse from "@/services/apiResponse";
+import { Account, Address, Experience } from "@prisma/client";
+
+import generator from "@services/generator.services";
 import { RequestHandler } from "express";
-import { OkPacketParams, RowDataPacket } from "mysql2";
 
-const {
-  GET_EXPERIENCES,
-  GET_EXPERIENCE_ID,
-  CREATE_EXPERIENCE,
-  UPDATE_EXPERIENCE,
-  DELETE_EXPERIENCE,
-  CREATE_ADDRESS,
-  UPDATE_ADDRESS,
-  DELETE_ADDRESS,
-  ADMIN_ID,
-} = process.env;
-
-const generator = new Generator(14);
+const { ADMIN_ID } = process.env;
 
 export const getExperiences: RequestHandler = async (req, res) => {
   try {
-    if (!GET_EXPERIENCES) {
-      res.status(500).send(handleError("Sql request is not defined"));
-      return;
-    }
+    const experiences = await prisma.experience.findMany();
 
-    const [experiences] = await pool.query(GET_EXPERIENCES);
-    loggedHandleSuccess("Get all experiences", experiences);
-    res.status(200).json(handleSuccess("Get all experiences", experiences));
+    return apiReponse.success(res, "Ok", experiences);
   } catch (error) {
-    loggedHandleError(error);
-    res.status(500).send(handleError(error));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };
 
-export const getExperienceId: RequestHandler = async (req, res) => {
+export const getExperienceId: RequestHandler<{ experienceId: string }> = async (
+  req,
+  res
+) => {
   try {
-    const { id } = req.params;
+    const { experienceId } = req.params;
 
-    if (!GET_EXPERIENCE_ID) {
-      res.status(500).send(handleError("Sql request is not defined"));
-      return;
-    } else if (!id) {
-      res.status(400).send(handleError("Id required !", "Missing item !"));
-      return;
-    }
+    if (!experienceId)
+      return apiReponse.error(res, "Not Found", new Error("Id not found"));
 
-    const [experience] = await pool.query(GET_EXPERIENCE_ID, [id]);
+    const experience = await prisma.experience.findUnique({
+      where: {
+        id: experienceId,
+      },
+    });
 
-    loggedHandleSuccess("Get experience by id", experience);
-    res.status(200).json(handleSuccess("Get experience by id", experience));
+    if (!experience)
+      return apiReponse.error(
+        res,
+        "Not Found",
+        new Error("Experience not found")
+      );
+
+    return apiReponse.success(res, "Ok", experience);
   } catch (error) {
-    loggedHandleError(error, "Error caught");
-    res.status(500).send(handleError(error, "Error caught"));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };
 
@@ -73,15 +53,13 @@ export const createNewExperience: RequestHandler<
 > = async (req, res) => {
   try {
     const user: Account = req.cookies.userCookie;
+
     const {
       address: { city, department, country },
       experience: { title, task, skills },
     } = req.body;
 
-    if (!CREATE_EXPERIENCE || !CREATE_ADDRESS || !ADMIN_ID) {
-      res.status(500).send(handleError("Sql request is not defined"));
-      return;
-    } else if (!user || user.role_id !== ADMIN_ID) {
+    if (!user || user.role_id !== ADMIN_ID) {
       res
         .status(401)
         .send(
@@ -93,7 +71,6 @@ export const createNewExperience: RequestHandler<
       return;
     }
 
-    
     const addressId = generator.generateIds();
     const experienceId = generator.generateIds();
 

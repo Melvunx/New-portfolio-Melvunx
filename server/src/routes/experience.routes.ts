@@ -14,11 +14,12 @@ const router = Router();
 
 // Get
 router.get("/", getExperiences);
-router.get("/:id", getExperienceId);
+
+router.get("/:experienceId", getExperienceId);
 
 // Post
 router.post(
-  "/an/new-exp",
+  "/new-exp",
   userAuthentification,
   adminAuthentification,
   createNewExperience
@@ -26,7 +27,7 @@ router.post(
 
 // Patch
 router.patch(
-  "/an/:add_id/:exp_id",
+  "/:addressId/:experienceId",
   userAuthentification,
   adminAuthentification,
   updateExperience
@@ -34,7 +35,7 @@ router.patch(
 
 // Delete
 router.delete(
-  "/an/:add_id/:exp_id",
+  "/:add_id/:exp_id",
   userAuthentification,
   adminAuthentification,
   deleteExperience

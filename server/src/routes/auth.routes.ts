@@ -1,8 +1,8 @@
 import {
-  accountRegister,
   googleLogin,
   passportLogin,
   passportLogout,
+  register,
   userController,
 } from "@controller/auth.controller";
 import {
@@ -13,7 +13,7 @@ import { Router } from "express";
 import passport from "passport";
 const router = Router();
 
-router.post("/register", accountRegister);
+router.post("/register", register);
 
 router.post("/login", passportLogin);
 
