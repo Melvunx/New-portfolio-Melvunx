@@ -6,8 +6,8 @@ import {
   userController,
 } from "@controller/auth.controller";
 import {
-  moderatorAuthentification,
-  userAuthentification,
+  moderatorAuthentication,
+  userAuthentication,
 } from "@middleware/auth.middleware";
 import { Router } from "express";
 import passport from "passport";
@@ -25,8 +25,8 @@ router.post("/logout", passportLogout);
 
 router.get(
   "/user",
-  userAuthentification,
-  moderatorAuthentification,
+  userAuthentication,
+  moderatorAuthentication,
   userController
 );
 

@@ -1,13 +1,14 @@
 import {
   createNewExperience,
+  deletedManyExperiences,
   deleteExperience,
   getExperienceId,
   getExperiences,
   updateExperience,
 } from "@controller/experience.controller";
 import {
-  adminAuthentification,
-  userAuthentification,
+  adminAuthentication,
+  userAuthentication,
 } from "@middleware/auth.middleware";
 import { Router } from "express";
 const router = Router();
@@ -20,25 +21,32 @@ router.get("/:experienceId", getExperienceId);
 // Post
 router.post(
   "/new-exp",
-  userAuthentification,
-  adminAuthentification,
+  userAuthentication,
+  adminAuthentication,
   createNewExperience
 );
 
 // Patch
 router.patch(
   "/:addressId/:experienceId",
-  userAuthentification,
-  adminAuthentification,
+  userAuthentication,
+  adminAuthentication,
   updateExperience
 );
 
 // Delete
 router.delete(
   "/:add_id/:exp_id",
-  userAuthentification,
-  adminAuthentification,
+  userAuthentication,
+  adminAuthentication,
   deleteExperience
+);
+
+router.delete(
+  "/many",
+  userAuthentication,
+  adminAuthentication,
+  deletedManyExperiences
 );
 
 module.exports = router;

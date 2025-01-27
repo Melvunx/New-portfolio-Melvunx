@@ -41,10 +41,12 @@ export const register: RequestHandler<{}, {}, Account> = async (req, res) => {
         "Not Found",
         new Error(".env values not found")
       );
-    else if (!username || !email || !password || !name || !lastname) {
-      apiReponse.error(res, "Bad Request", new Error("Missing credential"));
-      return;
-    }
+    else if (!username || !email || !password || !name || !lastname)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Missing credential")
+      );
 
     let existAccount: Account | null = null;
 
@@ -74,12 +76,11 @@ export const register: RequestHandler<{}, {}, Account> = async (req, res) => {
 
     if (existAccount) {
       console.log(colors.error("Username unavailable !"));
-      apiReponse.error(
+      return apiReponse.error(
         res,
         "Internal Server Error",
         new Error("Username already exists")
       );
-      return;
     }
 
     console.log(colors.success("Email and Username available !"));
@@ -109,10 +110,9 @@ export const register: RequestHandler<{}, {}, Account> = async (req, res) => {
 
     console.log(colors.success("Account created !"));
 
-    apiReponse.success(res, "Created", account);
+    return apiReponse.success(res, "Created", account);
   } catch (error) {
-    apiReponse.error(res, "Internal Server Error", error);
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };
 

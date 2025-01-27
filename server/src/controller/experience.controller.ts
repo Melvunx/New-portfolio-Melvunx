@@ -2,10 +2,13 @@ import { prisma } from "@/config/prisma";
 import apiReponse from "@/services/apiResponse";
 import { Account, Address, Experience } from "@prisma/client";
 
-import generator from "@services/generator.services";
 import { RequestHandler } from "express";
 
-const { ADMIN_ID } = process.env;
+const { ADMIN_ID, TARGET_TYPE_ID } = process.env;
+
+if (!ADMIN_ID || !TARGET_TYPE_ID) {
+  throw new Error("Ids not found");
+}
 
 export const getExperiences: RequestHandler = async (req, res) => {
   try {
@@ -56,182 +59,165 @@ export const createNewExperience: RequestHandler<
 
     const {
       address: { city, department, country },
-      experience: { title, task, skills },
+      experience: { title, tasks, skills },
     } = req.body;
 
-    if (!user || user.role_id !== ADMIN_ID) {
-      res
-        .status(401)
-        .send(
-          handleError("Unauthorized or session expired", "Unauthorized access")
-        );
-      return;
-    } else if (!city || !department || !country || !title || !task || !skills) {
-      res.status(400).send(handleError("Missing required fields"));
-      return;
-    }
+    if (!user || user.roleId !== ADMIN_ID)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Unauthorized or session expired")
+      );
+    else if (!city || !department || !country || !title || !tasks || !skills)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Missing required fields")
+      );
 
-    const addressId = generator.generateIds();
-    const experienceId = generator.generateIds();
-
-    const [newAddress] = await pool.query<RowDataPacket[] & OkPacketParams>(
-      CREATE_ADDRESS,
-      [addressId, city, department, country]
-    );
-
-    checkAffectedRow(newAddress);
-
-    const [newExperience] = await pool.query<RowDataPacket[] & OkPacketParams>(
-      CREATE_EXPERIENCE,
-      [experienceId, title, task, skills, addressId]
-    );
-
-    if (newExperience.affectedRows === 0) {
-      res.status(500).send(handleError("Error creating experience"));
-      return;
-    }
-
-    loggedHandleSuccess("New experience added!", {
-      experience: { id: experienceId, title, task, skills },
-      address: { id: addressId, city, department, country },
+    const address = await prisma.address.create({
+      data: {
+        city,
+        department,
+        country,
+      },
     });
-    res.status(201).json(
-      handleSuccess("New experience added!", {
-        experience: { id: experienceId, title, task, skills },
-        address: { id: addressId, city, department, country },
-      })
-    );
+
+    const experience = await prisma.experience.create({
+      data: {
+        title,
+        tasks,
+        skills,
+        targetTypeId: TARGET_TYPE_ID,
+        addressId: address.id,
+      },
+    });
+
+    return apiReponse.success(res, "Created", experience);
   } catch (error) {
-    loggedHandleError(error, "Error caught");
-    res.status(500).send(handleError(error, "Error caught"));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };
 
 export const updateExperience: RequestHandler = async (req, res) => {
   try {
     const user: Account = req.cookies.userCookie;
-    const { add_id, exp_id } = req.params;
+    const { addressId, experienceId } = req.params;
 
     const {
       address: { city, department, country },
-      experience: { title, task, skills },
+      experience: { title, tasks, skills },
     } = req.body;
 
-    if (!UPDATE_EXPERIENCE || !UPDATE_ADDRESS || !ADMIN_ID) {
-      res.status(500).send(handleError("Sql request is not defined"));
-      return;
-    } else if (!user || user.role_id !== ADMIN_ID) {
-      res
-        .status(401)
-        .send(
-          handleError("Unauthorized or session expired", "Unauthorized access")
-        );
-      return;
-    } else if (!exp_id || !add_id) {
-      res.status(400).send(handleError("Id required !", "Missing item !"));
-      return;
-    } else if (!city || !department || !country || !title || !task || !skills) {
-      res
-        .status(400)
-        .send(handleError("Missing credentials", "Undefined element !"));
-      return;
-    }
+    if (!user || user.roleId !== ADMIN_ID)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Unauthorized or session expired")
+      );
+    else if (!experienceId || !addressId)
+      return apiReponse.error(res, "Not Found", new Error("Id not found"));
+    else if (!city || !department || !country || !title || !tasks || !skills)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Missing required fields")
+      );
 
-    const [updateAddress] = await pool.query<RowDataPacket[] & OkPacketParams>(
-      UPDATE_ADDRESS,
-      [city, department, country, add_id]
-    );
-
-    checkAffectedRow(updateAddress);
-
-    const [updateExp] = await pool.query<RowDataPacket[] & OkPacketParams>(
-      UPDATE_EXPERIENCE,
-      [title, task, skills, exp_id]
-    );
-
-    checkAffectedRow(updateExp);
-
-    await updateDateTime("experience", exp_id);
-
-    loggedHandleSuccess("Experience modified !", {
-      address: { id: add_id, city, department, country },
-      experience: { id: exp_id, title, task, skills },
+    const experience = await prisma.experience.update({
+      where: {
+        id: experienceId,
+        addressId,
+      },
+      data: {
+        title,
+        tasks,
+        skills,
+        address: {
+          create: {
+            city,
+            department,
+            country,
+          },
+        },
+      },
     });
 
-    res.status(200).json(
-      handleSuccess("Experience modified !", {
-        address: { id: add_id, city, department, country },
-        experience: { id: exp_id, title, task, skills },
-      })
-    );
+    return apiReponse.success(res, "Ok", experience);
   } catch (error) {
-    loggedHandleError(error, "Error caught");
-    res.status(500).send(handleError(error, "Error caught"));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };
 
 export const deleteExperience: RequestHandler = async (req, res) => {
   try {
-    const { exp_id, add_id } = req.params;
     const user: Account = req.cookies.userCookie;
+    const { addressId, experienceId } = req.params;
 
-    if (
-      !DELETE_EXPERIENCE ||
-      !DELETE_ADDRESS ||
-      !GET_EXPERIENCE_ID ||
-      !ADMIN_ID
-    ) {
-      res.status(500).send(handleError("Sql request is not defined"));
-      return;
-    } else if (!user || user.role_id !== ADMIN_ID) {
-      res
-        .status(401)
-        .send(
-          handleError("Unauthorized or session expired", "Unauthorized access")
-        );
-      return;
-    } else if (!exp_id || !add_id) {
-      res.status(400).send(handleError("Id required !", "Missing item !"));
-      return;
-    }
-
-    const [deletedAddress] = await pool.query<RowDataPacket[] & OkPacketParams>(
-      DELETE_ADDRESS,
-      [add_id]
-    );
-
-    checkAffectedRow(deletedAddress);
-
-    console.log("Address deleted! Check experience in progress...");
-
-    const [checkExpDeleted] = await pool.query<RowDataPacket[] & Experience>(
-      GET_EXPERIENCE_ID,
-      [exp_id]
-    );
-
-    if (checkExpDeleted.length > 0) {
-      console.log("Experience not deleted ! suppression in progress...");
-      const [deletedExp] = await pool.query<RowDataPacket[] & OkPacketParams>(
-        DELETE_EXPERIENCE,
-        [exp_id]
+    if (!user || user.roleId !== ADMIN_ID)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Unauthorized or session expired")
       );
+    else if (!experienceId || !addressId)
+      return apiReponse.error(res, "Not Found", new Error("Id not found"));
 
-      checkAffectedRow(deletedExp);
+    const experience = await prisma.experience.delete({
+      where: {
+        id: experienceId,
+        addressId,
+      },
+    });
 
-      console.log("Experience deleted !");
-    }
-
-    console.log("Address and Experience deleted !");
-
-    loggedHandleSuccess("Experience deleted !", `Exp with the id ${exp_id}`);
-    res
-      .status(200)
-      .json(handleSuccess("Experience deleted !", `Exp with the id ${exp_id}`));
+    return apiReponse.success(
+      res,
+      "Ok",
+      null,
+      `Experience with the id ${experience.id} has been deleted`
+    );
   } catch (error) {
-    loggedHandleError(error, "Error caught");
-    res.status(500).send(handleError(error, "Error caught"));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
+  }
+};
+
+export const deletedManyExperiences: RequestHandler<
+  {},
+  {},
+  { addressIds: string[]; experienceIds: string[] }
+> = async (req, res) => {
+  try {
+    const user: Account = req.cookies.userCookie;
+    const { addressIds, experienceIds } = req.body;
+
+    if (!user || user.roleId !== ADMIN_ID)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Unauthorized or session expired")
+      );
+    else if ( // Creer une fonction pour vérifier si la variable est un array
+      !Array.isArray(addressIds) ||
+      addressIds.length === 0 ||
+      !Array.isArray(experienceIds) ||
+      experienceIds.length === 0
+    )
+      return apiReponse.error(res, "Unauthorized", new Error("Ids required"));
+
+    const experiences = await prisma.experience.deleteMany({
+      where: {
+        id: { in: experienceIds },
+        addressId: { in: addressIds },
+      },
+    });
+
+    return apiReponse.success(
+      res,
+      "Ok",
+      null,
+      `Experiences deleted ${experiences.count}`
+    );
+  } catch (error) {
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };

@@ -1,48 +1,31 @@
-import { Account } from "@/schema/account.schema";
+import { prisma } from "@/config/prisma";
 import colors from "@/schema/colors.schema";
-import { updateDateTime } from "@/services/handleDateTime.services";
-import pool from "@config/database";
-import { handleError, loggedHandleError } from "@utils/handleMessageError";
+import { handleResponseError } from "@/utils/handleResponse";
 import bcrypt from "bcrypt";
-import { RowDataPacket } from "mysql2";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-
-const { CHECK_LOGIN } = process.env;
 
 passport.use(
   "local",
   new LocalStrategy(async (username, password, done) => {
-    if (!CHECK_LOGIN)
-      return done(null, false, handleError("Sql request is not defined"));
-
     try {
-      const [user] = await pool.query<RowDataPacket[] & Account[]>(
-        CHECK_LOGIN,
-        [username]
-      );
+      const user = await prisma.account.findUnique({ where: { username } });
 
-      if (user[0].length === 0) {
-        return done(
-          null,
-          false,
-          handleError("User not found or invalid username")
-        );
-      }
+      if (!user)
+        return done(handleResponseError(new Error("User not found")), false);
+
       console.log(colors.info("User verification..."));
 
-      const isValidPassword = await bcrypt.compare(password, user[0].password);
+      const isValidPassword = await bcrypt.compare(password, user.password);
+
       if (!isValidPassword)
-        return done(null, false, handleError("Invalid password"));
+        return done(handleResponseError(new Error("Invalid password")), false);
 
-      await updateDateTime("account", user[0].id, "lastlogin");
+      console.log(colors.info(`User ${user.name} is authentificated !`));
 
-      console.log(colors.info(`User ${user[0].name} is authentificated !`));
-
-      return done(null, user[0]);
+      return done(null, user);
     } catch (error) {
-      loggedHandleError(error);
-      done(error, false);
+      done(handleResponseError(error), false);
     }
   })
 );
