@@ -32,7 +32,8 @@ class ApiResponse {
       | "Internal Server Error"
       | "Unauthorized"
       | "Not Found"
-      | "Bad Request",
+      | "Bad Request"
+      | "Forbidden",
     error?: any,
     message = "Request failed"
   ) {
@@ -46,6 +47,9 @@ class ApiResponse {
         break;
       case "Unauthorized":
         code = 401;
+        break;
+      case "Forbidden":
+        code = 403;
         break;
       default:
         code = 500;

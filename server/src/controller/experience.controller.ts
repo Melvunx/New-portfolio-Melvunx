@@ -1,5 +1,6 @@
 import { prisma } from "@/config/prisma";
 import apiReponse from "@/services/apiResponse";
+import isArrayOrIsEmpty from "@/utils/isArrayOrEmpty";
 import { Account, Address, Experience } from "@prisma/client";
 
 import { RequestHandler } from "express";
@@ -196,12 +197,8 @@ export const deletedManyExperiences: RequestHandler<
         "Bad Request",
         new Error("Unauthorized or session expired")
       );
-    else if ( // Creer une fonction pour vérifier si la variable est un array
-      !Array.isArray(addressIds) ||
-      addressIds.length === 0 ||
-      !Array.isArray(experienceIds) ||
-      experienceIds.length === 0
-    )
+
+    if (!isArrayOrIsEmpty(addressIds) || !isArrayOrIsEmpty(experienceIds))
       return apiReponse.error(res, "Unauthorized", new Error("Ids required"));
 
     const experiences = await prisma.experience.deleteMany({
