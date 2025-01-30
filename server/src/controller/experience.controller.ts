@@ -15,7 +15,13 @@ export const getExperiences: RequestHandler = async (req, res) => {
   try {
     const experiences = await prisma.experience.findMany();
 
-    return apiReponse.success(res, "Ok", experiences);
+    const isEmptyExperiences = isArrayOrIsEmpty(experiences);
+
+    return apiReponse.success(
+      res,
+      "Ok",
+      isEmptyExperiences ? experiences : null
+    );
   } catch (error) {
     return apiReponse.error(res, "Internal Server Error", error);
   }

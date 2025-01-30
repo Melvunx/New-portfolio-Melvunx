@@ -1,184 +1,181 @@
-import { Account, Reaction } from "@/schema/account.schema";
-import { Generator } from "@/services/generator.services";
-import { checkAffectedRow } from "@/services/handleAffectedRows.services";
-import pool from "@config/database";
-import { handleError, loggedHandleError } from "@utils/handleMessageError";
-import {
-  handleSuccess,
-  loggedHandleSuccess,
-} from "@utils/handleMessageSuccess";
+import { prisma } from "@/config/prisma";
+import apiReponse from "@/services/apiResponse";
+import isArrayOrIsEmpty from "@/utils/isArrayOrEmpty";
+import { Account, Reaction } from "@prisma/client";
 import { RequestHandler } from "express";
-import { OkPacketParams, RowDataPacket } from "mysql2";
 
-const {
-  GET_REACTIONS,
-  GET_REACTION_ID,
-  CREATE_REACTION,
-  UPDATE_REACTION,
-  DELETE_REACTION,
-  ADMIN_ID,
-} = process.env;
+const { ADMIN_ID } = process.env;
 
-const generator = new Generator(14);
+if (!ADMIN_ID) {
+  throw new Error("Id not found");
+}
 
 export const getReactions: RequestHandler = async (req, res) => {
   try {
-    if (!GET_REACTIONS) {
-      res.status(500).send(handleError("Sql request not defined"));
-      return;
-    }
+    const reactions = await prisma.reaction.findMany();
+    const isNotEmptyReaction = isArrayOrIsEmpty(reactions);
 
-    const [reactions] = await pool.query<RowDataPacket[] & Reaction>(
-      GET_REACTIONS
-    );
-
-    loggedHandleSuccess("Get all reactions", {
-      number_reaction: reactions.length,
-      reactions,
-    });
-    res.status(200).json(
-      handleSuccess("Get all reactions", {
-        number_reaction: reactions.length,
-        reactions,
-      })
-    );
+    return apiReponse.success(res, "Ok", isNotEmptyReaction ? reactions : null);
   } catch (error) {
-    loggedHandleError(error, "Error caught");
-    res.status(500).send(handleError(error, "Error caught"));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };
 
 export const getReactionId: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
-    if (!GET_REACTION_ID) {
-      res.status(500).send(handleError("Sql request not defined"));
-      return;
-    }
-    const [reaction] = await pool.query(GET_REACTION_ID, [id]);
-    loggedHandleSuccess("Get reaction by id", reaction);
-    res.status(200).json(handleSuccess("Get reaction by id", { reaction }));
+    const { reactionId } = req.params;
+
+    if (!reactionId)
+      return apiReponse.error(res, "Not Found", new Error("Id not found"));
+
+    const reaction = await prisma.reaction.findUnique({
+      where: {
+        id: reactionId,
+      },
+    });
+
+    return apiReponse.success(res, "Ok", reaction);
   } catch (error) {
-    loggedHandleError(error, "Error caught");
-    res.status(500).send(handleError(error, "Error caught"));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };
 
-export const createNewReaction: RequestHandler<
-  {},
-  {},
-  { reaction: Reaction }
-> = async (req, res) => {
+export const createNewReaction: RequestHandler<{}, {}, Reaction> = async (
+  req,
+  res
+) => {
   try {
     const user: Account = req.cookies.userCookie;
-    const {
-      reaction: { emoji, action, tooltip },
-    } = req.body;
+    const { emoji, action, tooltip } = req.body;
 
-    if (!CREATE_REACTION || !ADMIN_ID) {
-      res.status(500).send(handleError("Sql request not defined"));
-      return;
-    } else if (!user || user.role_id !== ADMIN_ID) {
-      res
-        .status(401)
-        .send(
-          handleError("Unauthorized or session expired", "Unauthorized access")
-        );
-      return;
-    }
+    if (!user || user.roleId !== ADMIN_ID)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Unauthorized or session expired")
+      );
 
-    
-    const reactionId = generator.generateIds();
+    if (!emoji || !action || !tooltip)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Missing required fields")
+      );
 
-    await pool.query(CREATE_REACTION, [reactionId, emoji, action, tooltip]);
-
-    loggedHandleSuccess("Create new reaction", {
-      reaction: { id: reactionId, emoji, action, tooltip },
+    const reaction = await prisma.reaction.create({
+      data: {
+        emoji,
+        action,
+        tooltip,
+      },
     });
-    res.status(201).json(
-      handleSuccess("Create new reaction", {
-        reaction: { id: reactionId, emoji, action, tooltip },
-      })
-    );
+
+    return apiReponse.success(res, "Created", reaction);
   } catch (error) {
-    loggedHandleError(error, "Error caught");
-    res.status(500).send(handleError(error, "Error caught"));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };
 
 export const updateReaction: RequestHandler = async (req, res) => {
   try {
     const user: Account = req.cookies.userCookie;
-    const { id } = req.params;
+    const { reactionId } = req.params;
     const {
       reaction: { emoji, action, tooltip },
     } = req.body;
 
-    if (!UPDATE_REACTION || !ADMIN_ID) {
-      res.status(500).send(handleError("Sql request not defined"));
-      return;
-    } else if (!user || user.role_id !== ADMIN_ID) {
-      res
-        .status(401)
-        .send(
-          handleError("Unauthorized or session expired", "Unauthorized access")
-        );
-      return;
-    } else if (!id) {
-      res.status(400).send(handleError("Id required !", "Element undefined"));
-    }
+    if (!user || user.roleId !== ADMIN_ID)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Unauthorized or session expired")
+      );
 
-    await pool.query(UPDATE_REACTION, [emoji, action, tooltip, id]);
-    loggedHandleSuccess("Update reaction", {
-      reaction: { emoji, action, tooltip },
+    if (!reactionId)
+      return apiReponse.error(res, "Not Found", new Error("Id not found"));
+
+    if (!emoji || !action || !tooltip)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Missing required fields")
+      );
+
+    const reaction = await prisma.reaction.update({
+      where: { id: reactionId },
+      data: {
+        emoji,
+        action,
+        tooltip,
+      },
     });
 
-    res.status(200).json(
-      handleSuccess("Update reaction", {
-        reaction: { emoji, action, tooltip },
-      })
-    );
+    return apiReponse.success(res, "Ok", reaction);
   } catch (error) {
-    loggedHandleError(error, "Error caught");
-    res.status(500).send(handleError(error, "Error caught"));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };
 
 export const deleteReaction: RequestHandler = async (req, res) => {
   try {
     const user: Account = req.cookies.userCookie;
-    const { id } = req.params;
+    const { reactionId } = req.params;
 
-    if (!DELETE_REACTION || !ADMIN_ID) {
-      res.status(500).send(handleError("Sql request not defined"));
-      return;
-    }
-    if (!user || user.role_id !== ADMIN_ID) {
-      res
-        .status(401)
-        .send(
-          handleError("Unauthorized or session expired", "Unauthorized access")
-        );
-      return;
-    } else if (!id) {
-      res.status(400).send(handleError("Id required !", "Element undefined"));
-    }
+    if (!user || user.roleId !== ADMIN_ID)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Unauthorized or session expired")
+      );
 
-    const [deletedReaction] = await pool.query<
-      RowDataPacket[] & OkPacketParams
-    >(DELETE_REACTION, [id]);
+    if (!reactionId)
+      return apiReponse.error(res, "Not Found", new Error("Id not found"));
 
-    checkAffectedRow(deletedReaction);
+    const reaction = await prisma.reaction.delete({
+      where: { id: reactionId },
+    });
 
-    loggedHandleSuccess(`Delete reaction with the id ${id}`);
-    res.status(200).json(handleSuccess(`Delete reaction with the id ${id}`));
+    return apiReponse.success(
+      res,
+      "Ok",
+      null,
+      `Reaction ${reaction.emoji} deleted`
+    );
   } catch (error) {
-    loggedHandleError(error, "Error caught");
-    res.status(500).send(handleError(error, "Error caught"));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
+  }
+};
+
+export const deleteManyReactions: RequestHandler<
+  {},
+  {},
+  { ids: string[] }
+> = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    const user = req.cookies.userCookie;
+
+    if (!user || user.roleId !== ADMIN_ID)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Unauthorized or session expired")
+      );
+
+    if (!isArrayOrIsEmpty(ids))
+      return apiReponse.error(res, "Bad Request", new Error("Ids required"));
+
+    const reaction = await prisma.reaction.deleteMany({
+      where: { id: { in: ids } },
+    });
+
+    return apiReponse.success(
+      res,
+      "Ok",
+      null,
+      `Reactions deleted ${reaction.count}`
+    );
+  } catch (error) {
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };

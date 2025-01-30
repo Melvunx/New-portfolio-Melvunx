@@ -1,286 +1,231 @@
-import { Project } from "@/schema/project.schema";
-import { Generator } from "@/services/generator.services";
-import { checkAffectedRow } from "@/services/handleAffectedRows.services";
-import { updateDateTime } from "@/services/handleDateTime.services";
-import pool from "@config/database";
-import { Account } from "@schema/account.schema";
-import { handleError, loggedHandleError } from "@utils/handleMessageError";
-import {
-  handleSuccess,
-  loggedHandleSuccess,
-} from "@utils/handleMessageSuccess";
+import { prisma } from "@/config/prisma";
+import apiReponse from "@/services/apiResponse";
+import isArrayOrIsEmpty from "@/utils/isArrayOrEmpty";
+import { Account, Project } from "@prisma/client";
 import { RequestHandler } from "express";
-import { OkPacketParams, RowDataPacket } from "mysql2";
 
-const {
-  GET_PROJECTS,
-  GET_PROJECT_ID,
-  CREATE_NEW_PROJECT,
-  MODIFY_PROJECT,
-  DELETE_PROJECT,
-  ADMIN_ID,
-} = process.env;
+const { ADMIN_ID, TARGET_TYPE_ID } = process.env;
 
-const generator = new Generator(14);
-
+if (!ADMIN_ID || !TARGET_TYPE_ID) {
+  throw new Error("Ids not found");
+}
 
 export const getProjects: RequestHandler = async (req, res) => {
   try {
-    if (!GET_PROJECTS) {
-      res
-        .status(500)
-        .send(handleError("Sql request is not defined", "Undefined element"));
-      return;
-    }
+    const projects = await prisma.project.findMany({
+      include: {
+        technologies: {
+          include: {
+            technology: true,
+          },
+        },
+        projectStatus: true,
+      },
+    });
 
-    const [projects] = await pool.query(GET_PROJECTS);
+    const isNotEmptyProjects = isArrayOrIsEmpty(projects);
 
-    loggedHandleSuccess("Get all projects", projects);
-    res.status(200).json(handleSuccess("Get all projects", projects));
+    return apiReponse.success(res, "Ok", isNotEmptyProjects ? projects : null);
   } catch (error) {
-    loggedHandleError(error, "Catched error");
-    res.status(500).send(handleError(error, "Catched error"));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };
 
 export const getProjectId: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { projectId } = req.params;
 
-    if (!GET_PROJECT_ID) {
-      res
-        .status(500)
-        .send(handleError("Sql request is not defined", "Undefined element"));
-      return;
-    } else if (!id) {
-      res.status(400).send(handleError("Id required !", "Missing item !"));
-      return;
-    }
+    if (!projectId)
+      return apiReponse.error(res, "Not Found", new Error("Id not found"));
 
-    const [project] = await pool.query(GET_PROJECT_ID);
+    const project = await prisma.project.findUnique({
+      where: {
+        id: projectId,
+      },
+      include: {
+        technologies: {
+          include: {
+            technology: true,
+          },
+        },
+        projectStatus: true,
+      },
+    });
 
-    loggedHandleSuccess("Get project by id", project);
-    res.status(200).json(handleSuccess("Get project by id", project));
+    return apiReponse.success(res, "Ok", project);
   } catch (error) {
-    loggedHandleError(error);
-    res.status(500).send(handleError(error));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };
 
-export const createNewProject: RequestHandler<
+export const createNewProject: RequestHandler<{}, {}, Project> = async (
+  req,
+  res
+) => {
+  try {
+    const user: Account = req.cookies.userCookie;
+
+    const {
+      title,
+      description,
+      projectStatusId,
+      productionUrl,
+      githubUrl,
+      imageUrl,
+      videoUrl,
+    } = req.body;
+
+    if (!user || user.roleId !== ADMIN_ID)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Unauthorized or session expired")
+      );
+
+    if (!title || !description || !projectStatusId)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Missing required fields")
+      );
+
+    const project = await prisma.project.create({
+      data: {
+        title,
+        description,
+        productionUrl: productionUrl ?? "NULL",
+        githubUrl: githubUrl ?? "NULL",
+        imageUrl: imageUrl ?? "NULL",
+        videoUrl: videoUrl ?? "NULL",
+        targetTypeId: TARGET_TYPE_ID,
+        projectStatusId,
+      },
+    });
+
+    return apiReponse.success(res, "Created", project);
+  } catch (error) {
+    return apiReponse.error(res, "Internal Server Error", error);
+  }
+};
+
+export const updateProject: RequestHandler<
+  { projectId: string },
   {},
-  {},
-  { project: Project }
+  Project
 > = async (req, res) => {
   try {
+    const { projectId } = req.params;
     const user: Account = req.cookies.userCookie;
-
-    const {
-      project: {
-        title,
-        description,
-        project_status_id,
-        github_url,
-        production_url,
-        image_url,
-        video_url,
-      },
-    } = req.body;
-
-    if (!CREATE_NEW_PROJECT || !ADMIN_ID) {
-      res
-        .status(500)
-        .send(handleError("Sql request is not defined", "Undefined element"));
-      return;
-    } else if (!user || user.role_id !== ADMIN_ID) {
-      res
-        .status(401)
-        .send(
-          handleError("Unauthorized or session expired", "Unauthorized access")
-        );
-      return;
-    }
-
-    if (!title || !description || !project_status_id || !github_url) {
-      res.status(400).send(handleError("Missing required fields"));
-      return;
-    }
-
-    const projectId = generator.generateIds();
-
-    const [newProject] = await pool.query<RowDataPacket[] & OkPacketParams>(
-      CREATE_NEW_PROJECT,
-      [
-        projectId,
-        title,
-        description,
-        project_status_id,
-        github_url,
-        production_url ? production_url : "NULL",
-        image_url ? image_url : "NULL",
-        video_url ? video_url : "NULL",
-      ]
-    );
-
-    checkAffectedRow(newProject);
-
-    loggedHandleSuccess("New project !", {
-      project: {
-        title,
-        description,
-        project_status_id,
-        github_url,
-        production_url: production_url ? production_url : "NULL",
-        image_url: image_url ? image_url : "NULL",
-        video_url: video_url ? video_url : "NULL",
-      },
-    });
-
-    res.status(201).json(
-      handleSuccess("New project created", {
-        project: {
-          title,
-          description,
-          project_status_id,
-          github_url,
-          production_url: production_url ? production_url : "NULL",
-          image_url: image_url ? image_url : "NULL",
-          video_url: video_url ? video_url : "NULL",
-        },
-      })
-    );
-  } catch (error) {
-    loggedHandleError(error, "Catched error");
-    res.status(500).send(handleError(error, "Catched error"));
-    return;
-  }
-};
-
-export const updateProject: RequestHandler = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const user: Account = req.cookies.userCookie;
-
-    if (!MODIFY_PROJECT || !ADMIN_ID) {
-      res
-        .status(500)
-        .send(
-          handleError(
-            new Error("Sql request is not defined"),
-            "Undefined element"
-          )
-        );
-      return;
-    } else if (!user || user.role_id !== ADMIN_ID) {
-      res.status(401).send(handleError("Unauthorized", "Unauthorized"));
-    } else if (!id) {
-      res.status(400).send(handleError("Missing id", "Missing id"));
-      return;
-    }
 
     const {
       title,
       description,
-      project_status_id,
-      github_url,
-      production_url,
-      image_url,
-      video_url,
+      projectStatusId,
+      productionUrl,
+      githubUrl,
+      imageUrl,
+      videoUrl,
     } = req.body;
 
-    if (!title || !description || !project_status_id || !github_url) {
-      res.status(400).send(handleError("Missing required fields"));
-      return;
-    }
+    if (!user || user.roleId !== ADMIN_ID)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Unauthorized or session expired")
+      );
 
-    const [modifiedProject] = await pool.query<
-      RowDataPacket[] & OkPacketParams
-    >(MODIFY_PROJECT, [
-      title,
-      description,
-      project_status_id,
-      github_url,
-      production_url ? production_url : "NULL",
-      image_url ? image_url : "NULL",
-      video_url ? video_url : "NULL",
-      id,
-    ]);
+    if (!projectId)
+      return apiReponse.error(res, "Not Found", new Error("Id not found"));
 
-    checkAffectedRow(modifiedProject);
+    if (!title || !description || !projectStatusId)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Missing required fields")
+      );
 
-    await updateDateTime("project", id);
-
-    loggedHandleSuccess("Modify project", {
-      modifiedProject: {
-        id,
+    const project = await prisma.project.update({
+      where: { id: projectId },
+      data: {
         title,
         description,
-        project_status_id,
-        github_url,
-        production_url: production_url ? production_url : "NULL",
-        image_url: image_url ? image_url : "NULL",
-        video_url: video_url ? video_url : "NULL",
+        projectStatusId,
+        productionUrl: productionUrl ?? "NULL",
+        githubUrl: githubUrl ?? "NULL",
+        imageUrl: imageUrl ?? "NULL",
+        videoUrl: videoUrl ?? "NULL",
       },
     });
-    res.status(200).json(
-      handleSuccess("Modified project", {
-        id,
-        title,
-        description,
-        project_status_id,
-        github_url,
-        production_url: production_url ? production_url : "NULL",
-        image_url: image_url ? image_url : "NULL",
-        video_url: video_url ? video_url : "NULL",
-      })
-    );
+
+    return apiReponse.success(res, "Ok", project);
   } catch (error) {
-    loggedHandleError(error, "Catched error");
-    res.status(500).send(handleError(error, "Catched error"));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };
 
 export const deleteProject: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { projectId } = req.params;
     const user: Account = req.cookies.userCookie;
 
-    if (!DELETE_PROJECT || !ADMIN_ID) {
-      res
-        .status(500)
-        .send(handleError("Sql request not defined", "Undefined element"));
-      return;
-    } else if (!user || user.role_id !== ADMIN_ID) {
-      res
-        .status(401)
-        .send(
-          handleError(
-            new Error("Unauthorized or session expired"),
-            "Unauthorized"
-          )
-        );
-      return;
-    } else if (!id) {
-      res.status(400).send(handleError("Missing id", "Missing id"));
-      return;
-    }
+    if (!user || user.roleId !== ADMIN_ID)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Unauthorized or session expired")
+      );
 
-    const [deletedProject] = await pool.query<RowDataPacket[] & OkPacketParams>(
-      DELETE_PROJECT,
-      [id]
+    if (!projectId)
+      return apiReponse.error(res, "Not Found", new Error("Id not found"));
+
+    const project = await prisma.project.delete({
+      where: { id: projectId },
+    });
+
+    return apiReponse.success(
+      res,
+      "Ok",
+      null,
+      `Project ${project.title} deleted`
     );
-
-    checkAffectedRow(deletedProject);
-
-    loggedHandleSuccess(`Project with the id ${id} deleted`);
-
-    res.status(200).send(handleSuccess("Project deleted successfully"));
   } catch (error) {
-    loggedHandleError(error, "Catched error");
-    res.status(500).send(handleError(error, "Catched error"));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
+  }
+};
+
+export const deleteManyProjects: RequestHandler<
+  {},
+  {},
+  { ids: string[] }
+> = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    const user: Account = req.cookies.userCookie;
+    if (!user || user.roleId !== ADMIN_ID)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Unauthorized or session expired")
+      );
+
+    if (!isArrayOrIsEmpty(ids))
+      return apiReponse.error(res, "Bad Request", new Error("Ids required"));
+
+    const projects = await prisma.project.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+
+    return apiReponse.success(
+      res,
+      "Ok",
+      null,
+      `Number of project deleted ${projects.count}`
+    );
+  } catch (error) {
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };

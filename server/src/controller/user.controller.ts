@@ -1,44 +1,37 @@
-import pool from "@config/database";
-import { Account } from "@schema/account.schema";
-import { handleError, loggedHandleError } from "@utils/handleMessageError";
-import {
-  handleSuccess,
-  loggedHandleSuccess,
-} from "@utils/handleMessageSuccess";
+import { prisma } from "@/config/prisma";
+import apiReponse from "@/services/apiResponse";
+import { Account } from "@prisma/client";
 import { RequestHandler } from "express";
-import { RowDataPacket } from "mysql2";
-
-const { SELECT_USER_ID } = process.env;
 
 export const getUserProfile: RequestHandler = async (req, res) => {
   try {
     const user: Account = req.cookies.userCookie;
 
-    if (!user) {
-      res
-        .status(401)
-        .send(
-          handleError(
-            "User not found or session expired",
-            "You are not logged in !"
-          )
-        );
-      return;
-    } else if (!SELECT_USER_ID) {
-      res.status(500).send(handleError("Sql request not defined"));
-      return;
-    }
+    if (!user)
+      return apiReponse.error(
+        res,
+        "Bad Request",
+        new Error("Unauthorized or session expired")
+      );
 
-    const [userProfile] = await pool.query<RowDataPacket[] & Account>(
-      SELECT_USER_ID,
-      [user.id]
-    );
+    const account = await prisma.account.findUniqueOrThrow({
+      where: { id: user.id },
+      include: {
+        _count: {
+          select: {
+            reactions: true,
+          },
+        },
+        reactions: {
+          include: {
+            reaction: true,
+          },
+        },
+      },
+    });
 
-    loggedHandleSuccess("Display user's profile", userProfile[0]);
-    res.status(200).json(handleSuccess("User profile", userProfile[0]));
+    return apiReponse.success(res, "Ok", account);
   } catch (error) {
-    loggedHandleError(error, "Error caught");
-    res.status(500).send(handleError(error, "Error caught"));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };

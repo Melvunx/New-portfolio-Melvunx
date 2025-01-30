@@ -1,6 +1,6 @@
 import {
-  adminAuthentification,
-  userAuthentification,
+  adminAuthentication,
+  userAuthentication,
 } from "@/middleware/auth.middleware";
 import {
   createNewProject,
@@ -15,30 +15,37 @@ const router = Router();
 // Get projects
 router.get("/", getProjects);
 
-router.get("/:id", getProjectId);
+router.get("/:projectId", getProjectId);
 
 // Post projects
 router.post(
   "/new-project",
-  userAuthentification,
-  adminAuthentification,
+  userAuthentication,
+  adminAuthentication,
   createNewProject
 );
 
 // Patch projects
 router.patch(
-  "/:id",
-  userAuthentification,
-  adminAuthentification,
+  "/:projectId",
+  userAuthentication,
+  adminAuthentication,
   updateProject
 );
 
 // Delete projects
 router.delete(
-  "/:id",
-  userAuthentification,
-  adminAuthentification,
+  "/:projectId",
+  userAuthentication,
+  adminAuthentication,
   deleteProject
+);
+
+router.delete(
+  "/many",
+  userAuthentication,
+  adminAuthentication,
+  deleteManyProject
 );
 
 module.exports = router;

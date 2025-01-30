@@ -23,6 +23,11 @@ passport.use(
 
       console.log(colors.info(`User ${user.name} is authentificated !`));
 
+      await prisma.account.update({
+        where: { id: user.id },
+        data: { lastLogin: new Date() },
+      });
+
       return done(null, user);
     } catch (error) {
       done(handleResponseError(error), false);

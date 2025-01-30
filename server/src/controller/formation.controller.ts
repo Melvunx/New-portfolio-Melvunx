@@ -15,7 +15,9 @@ export const getFormations: RequestHandler = async (req, res) => {
   try {
     const formations = await prisma.formation.findMany();
 
-    return apiReponse.success(res, "Ok", formations);
+    const isEmptyFormations = isArrayOrIsEmpty(formations);
+
+    return apiReponse.success(res, "Ok", isEmptyFormations ? formations : null);
   } catch (error) {
     return apiReponse.error(res, "Internal Server Error", error);
   }
@@ -183,7 +185,8 @@ export const deleteFormation: RequestHandler = async (req, res) => {
         "Bad Request",
         new Error("Unauthorized or session expired")
       );
-    else if (!formationId || !addressId)
+
+    if (!formationId || !addressId)
       return apiReponse.error(res, "Not Found", new Error("Id not found"));
 
     const formation = await prisma.formation.delete({

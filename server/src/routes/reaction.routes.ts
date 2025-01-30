@@ -1,43 +1,51 @@
 import {
   createNewReaction,
+  deleteManyReactions,
   deleteReaction,
   getReactionId,
   getReactions,
   updateReaction,
 } from "@controller/reaction.controller";
 import {
-  adminAuthentification,
-  userAuthentification,
+  adminAuthentication,
+  userAuthentication,
 } from "@middleware/auth.middleware";
 import { Router } from "express";
 const router = Router();
 
 // Get
 router.get("/panels", getReactions);
-router.get("/panels/:id", getReactionId);
+router.get("/panels/:reactionId", getReactionId);
 
 // Post
 router.post(
   "/new-reaction",
-  userAuthentification,
-  adminAuthentification,
+  userAuthentication,
+  adminAuthentication,
   createNewReaction
 );
 
 // Modify a reaction
 router.patch(
-  "/:id",
-  userAuthentification,
-  adminAuthentification,
+  "/:reactionId",
+  userAuthentication,
+  adminAuthentication,
   updateReaction
 );
 
 // Delete
 router.delete(
-  "/:id",
-  userAuthentification,
-  adminAuthentification,
+  "/:reactionId",
+  userAuthentication,
+  adminAuthentication,
   deleteReaction
+);
+
+router.delete(
+  "/:reactionId",
+  userAuthentication,
+  adminAuthentication,
+  deleteManyReactions
 );
 
 module.exports = router;

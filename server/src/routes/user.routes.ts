@@ -6,32 +6,36 @@ import {
 } from "@controller/reactionLog.controller";
 import { getUserProfile } from "@controller/user.controller";
 import {
-  adminAuthentification,
-  userAuthentification,
+  adminAuthentication,
+  userAuthentication,
 } from "@middleware/auth.middleware";
 import { Router } from "express";
 const router = Router();
 
 // User only
-router.get("/profile", userAuthentification, getUserProfile);
-router.get("/reaction-log", userAuthentification, getUserReactionLog);
-
-// Admin panel
-router.get(
-  "/reaction-log/an/panels",
-  userAuthentification,
-  adminAuthentification,
-  getAllReactionLog
-);
+router.get("/profile", userAuthentication, getUserProfile);
+router.get("/reaction-log", userAuthentication, getUserReactionLog);
 
 // Add a reaction
-router.post("/add/reaction-log/:reaction_id/:target_id", userAuthentification, reactToElement);
+router.post(
+  "/add/reaction-log/:reactionId/:targetId",
+  userAuthentication,
+  reactToElement
+);
 
 // Remove a reaction
 router.delete(
-  "/remove/reaction-log",
-  userAuthentification,
+  "/remove/reaction-log/:reactionLogId",
+  userAuthentication,
   removeReactionFromElement
+);
+
+// Admin panel
+router.get(
+  "/reaction-log/panels",
+  userAuthentication,
+  adminAuthentication,
+  getAllReactionLog
 );
 
 module.exports = router;

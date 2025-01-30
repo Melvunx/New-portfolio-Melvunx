@@ -1,84 +1,32 @@
-import { checkAffectedRow } from "@/services/handleAffectedRows.services";
-import { handleError, loggedHandleError } from "@/utils/handleMessageError";
-import {
-  handleSuccess,
-  loggedHandleSuccess,
-} from "@/utils/handleMessageSuccess";
-import { Account } from "@schema/account.schema";
-import { Letter } from "@schema/letter.schema";
-import { Generator } from "@services/generator.services";
+import sendMail from "@/config/email";
+import { prisma } from "@/config/prisma";
+import apiReponse from "@/services/apiResponse";
+import { Account, Letter } from "@prisma/client";
 import { RequestHandler } from "express";
-import { OkPacketParams, RowDataPacket } from "mysql2";
-import { Resend } from "resend";
-import pool from "../config/database";
 
-const { RESEND_API_KEY, MY_EMAIL, INSERT_LETTER } = process.env;
-
-const generator = new Generator(14);
-
-const resend = new Resend(RESEND_API_KEY);
-
-export const postEmail: RequestHandler<{}, {}, { letter: Letter }> = async (
-  req,
-  res
-) => {
+export const postEmail: RequestHandler<{}, {}, Letter> = async (req, res) => {
   try {
-    const user: Account = req.cookies.userCookie;
+    const user: Account | undefined = req.cookies.userCookie;
 
-    if (!INSERT_LETTER || !MY_EMAIL) {
-      res
-        .status(500)
-        .send(handleError("Sql request undefined", "Undefined element"));
-      return;
-    }
+    const { sender, email, objet, message } = req.body;
 
-    const {
-      letter: { sender, object, email, message },
-    } = req.body;
+    if (!sender || !email || !objet || !message)
+      return apiReponse.error(res, "Bad Request", new Error("Missing fiels"));
 
-    const letterId = generator.generateIds();
-
-    const [createdEmail] = await pool.query<RowDataPacket[] & OkPacketParams>(
-      INSERT_LETTER,
-      [letterId, sender, object, email, message, user ? user.id : undefined]
-    );
-
-    checkAffectedRow(createdEmail);
-
-    const newEmail = await resend.emails.send({
-      from: email,
-      to: MY_EMAIL,
-      subject: object,
-      html: `<strong>${message}</strong>`,
-    });
-
-    loggedHandleSuccess("Email send !", {
-      email: {
-        id: letterId,
+    const letter = await prisma.letter.create({
+      data: {
         sender,
-        object,
         email,
+        objet,
         message,
-        acountId: user ? user.id : undefined,
+        accountId: user ? user.id : null,
       },
-      email_status: newEmail,
     });
-    res.status(201).json(
-      handleSuccess("Email send !", {
-        email: {
-          id: letterId,
-          sender,
-          object,
-          email,
-          message,
-          acountId: user ? user.id : undefined,
-        },
-        email_status: newEmail,
-      })
-    );
+
+    // await sendMail(email, objet, message);
+
+    return apiReponse.success(res, "Created", letter);
   } catch (error) {
-    loggedHandleError(error, "Caught error");
-    res.status(500).json(handleError(error));
-    return;
+    return apiReponse.error(res, "Internal Server Error", error);
   }
 };
