@@ -4,6 +4,7 @@ import {
 } from "@/middleware/auth.middleware";
 import {
   createNewProject,
+  deleteManyProjects,
   deleteProject,
   getProjectId,
   getProjects,
@@ -45,7 +46,7 @@ router.delete(
   "/many",
   userAuthentication,
   adminAuthentication,
-  deleteManyProject
+  deleteManyProjects
 );
 
 module.exports = router;

@@ -41,7 +41,8 @@ export const register: RequestHandler<{}, {}, Account> = async (req, res) => {
         "Not Found",
         new Error(".env values not found")
       );
-    else if (!username || !email || !password || !name || !lastname)
+
+    if (!username || !email || !password || !name || !lastname)
       return apiReponse.error(
         res,
         "Bad Request",

@@ -1,28 +1,38 @@
-import { createNewInfoAboutMe, deleteAboutMe, editAboutMe, getInfoAboutMe } from "@controller/aboutMe.controller";
 import {
-  adminAuthentification,
-  userAuthentification,
+  createNewInfoAboutMe,
+  deleteAboutMe,
+  editAboutMe,
+  getInfoAboutMe,
+} from "@controller/aboutMe.controller";
+import {
+  adminAuthentication,
+  userAuthentication,
 } from "@middleware/auth.middleware";
 import { Router } from "express";
 
 const router = Router();
 
-router.get(
-  "/info",
-  userAuthentification,
-  adminAuthentification,
-  getInfoAboutMe
-);
+router.get("/info", userAuthentication, adminAuthentication, getInfoAboutMe);
 
 router.post(
   "/new-info",
-  userAuthentification,
-  adminAuthentification,
+  userAuthentication,
+  adminAuthentication,
   createNewInfoAboutMe
 );
 
-router.patch("/info/:about_meId", userAuthentification, adminAuthentification, editAboutMe);
+router.patch(
+  "/info/:about_meId",
+  userAuthentication,
+  adminAuthentication,
+  editAboutMe
+);
 
-router.delete("/info/:id", userAuthentification, adminAuthentification, deleteAboutMe);
+router.delete(
+  "/info/:id",
+  userAuthentication,
+  adminAuthentication,
+  deleteAboutMe
+);
 
 module.exports = router;

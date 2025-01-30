@@ -6,8 +6,8 @@ import {
   updateFormation,
 } from "@controller/formation.controller";
 import {
-  adminAuthentification,
-  userAuthentification,
+  adminAuthentication,
+  userAuthentication,
 } from "@middleware/auth.middleware";
 import { Router } from "express";
 const router = Router();
@@ -19,24 +19,24 @@ router.get("/:id", getFormationId);
 // Post
 router.post(
   "/an/new-formation",
-  userAuthentification,
-  adminAuthentification,
+  userAuthentication,
+  adminAuthentication,
   createNewFormation
 );
 
 // Patch
 router.patch(
   "/an/:add_id/form_id",
-  userAuthentification,
-  adminAuthentification,
+  userAuthentication,
+  adminAuthentication,
   updateFormation
 );
 
 // Delete
 router.delete(
   "/an/:add_id/form_id",
-  userAuthentification,
-  adminAuthentification,
+  userAuthentication,
+  adminAuthentication,
   deleteFormation
 );
 

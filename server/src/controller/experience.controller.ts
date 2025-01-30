@@ -75,7 +75,8 @@ export const createNewExperience: RequestHandler<
         "Bad Request",
         new Error("Unauthorized or session expired")
       );
-    else if (!city || !department || !country || !title || !tasks || !skills)
+
+    if (!city || !department || !country || !title || !tasks || !skills)
       return apiReponse.error(
         res,
         "Bad Request",

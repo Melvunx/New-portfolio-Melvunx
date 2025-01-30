@@ -1,48 +1,24 @@
 require("dotenv").config();
-import pool from "@config/database";
-import { Account } from "@schema/account.schema";
 import colors from "@schema/colors.schema";
 import "@strategies/google-strategy";
 import "@strategies/local-strategy";
 import cookieParser from "cookie-parser";
 import express from "express";
-import MySQLStoreFactory from "express-mysql-session";
 import * as session from "express-session";
-import { RowDataPacket } from "mysql2";
 import passport from "passport";
-import { handleError, loggedHandleError } from "./utils/handleMessageError";
+import { prisma } from "./config/prisma";
+import { handleResponseError } from "./utils/handleResponse";
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const app = express();
 
-const {
-  PORT,
-  SECRET_SESSION,
-  DATABASE_HOST,
-  DATABASE_USER,
-  DATABASE_PASSWORD,
-  DATABASE_NAME,
-} = process.env;
+const { PORT, SECRET_SESSION } = process.env;
+
+if (!PORT || !SECRET_SESSION) {
+  throw new Error("Ids not found");
+}
+
 const oneHour = 60 * 60 * 1000;
-
-const { SELECT_USER_ID } = process.env;
-
-const MySQLStore = MySQLStoreFactory(session);
-
-const sessionStore = new MySQLStore({
-  host: DATABASE_HOST,
-  user: DATABASE_USER,
-  password: DATABASE_PASSWORD,
-  database: DATABASE_NAME,
-  schema: {
-    tableName: "sessions",
-    columnNames: {
-      session_id: "session_id",
-      expires: "expires_date",
-      data: "session_data",
-    },
-  },
-});
 
 app.use(
   cors({
@@ -55,10 +31,9 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   session.default({
-    secret: SECRET_SESSION || "Melvunx",
+    secret: SECRET_SESSION,
     saveUninitialized: false,
     resave: false,
-    store: sessionStore,
     cookie: {
       maxAge: oneHour,
     },
@@ -70,22 +45,18 @@ app.use(passport.session());
 
 passport.serializeUser((user, done) => done(null, user.id));
 
-passport.deserializeUser(async (id: number, done) => {
-  if (!SELECT_USER_ID)
-    return done(handleError(new Error("Sql request not defined")), false);
+passport.deserializeUser(async (id: string, done) => {
   try {
-    const [user] = await pool.query<RowDataPacket[] & Account[]>(
-      SELECT_USER_ID,
-      [id]
-    );
-    if (user.length === 0)
-      return done(
-        handleError(new Error("User not found"), "DeserializeUser error")
-      );
-    return done(null, user[0]);
+    const user = await prisma.account.findUnique({
+      where: { id },
+    });
+
+    if (!user)
+      return done(handleResponseError(new Error("User not found")), false);
+
+    return done(null, user);
   } catch (error) {
-    loggedHandleError(error);
-    return done(error, null);
+    return done(handleResponseError(error), null);
   }
 });
 
@@ -108,22 +79,11 @@ app.use("/api/formation", formationRoutes);
 app.use("/api/project", projectRoutes);
 app.use("/api/reaction", reactionRoutes);
 
-pool
-  .query("SELECT 1")
-  .then(() => {
-    console.log(colors.success("Connected to database"));
-
-    app.listen(PORT, () =>
-      console.log(
-        colors.info(`Server running on port http://localhost:${Number(PORT)}`)
-      )
-    );
-  })
-  .catch((error) =>
-    console.log(
-      colors.error({ message: "Error to connect to the database", error })
-    )
-  );
+app.listen(PORT, () =>
+  console.log(
+    colors.info(`Server running on port http://localhost:${Number(PORT)}`)
+  )
+);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
