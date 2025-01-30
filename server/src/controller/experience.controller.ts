@@ -5,9 +5,9 @@ import { Account, Address, Experience } from "@prisma/client";
 
 import { RequestHandler } from "express";
 
-const { ADMIN_ID, TARGET_TYPE_ID } = process.env;
+const { ADMIN_ID, TARGET_TYPE_ID_EXPERIENCE } = process.env;
 
-if (!ADMIN_ID || !TARGET_TYPE_ID) {
+if (!ADMIN_ID || !TARGET_TYPE_ID_EXPERIENCE) {
   throw new Error("Ids not found");
 }
 
@@ -96,7 +96,7 @@ export const createNewExperience: RequestHandler<
         title,
         tasks,
         skills,
-        targetTypeId: TARGET_TYPE_ID,
+        targetTypeId: TARGET_TYPE_ID_EXPERIENCE,
         addressId: address.id,
       },
     });

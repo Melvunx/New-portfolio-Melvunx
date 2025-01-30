@@ -4,9 +4,9 @@ import isArrayOrIsEmpty from "@/utils/isArrayOrEmpty";
 import { Account, Project } from "@prisma/client";
 import { RequestHandler } from "express";
 
-const { ADMIN_ID, TARGET_TYPE_ID } = process.env;
+const { ADMIN_ID, TARGET_TYPE_ID_PROJECT } = process.env;
 
-if (!ADMIN_ID || !TARGET_TYPE_ID) {
+if (!ADMIN_ID || !TARGET_TYPE_ID_PROJECT) {
   throw new Error("Ids not found");
 }
 
@@ -97,7 +97,7 @@ export const createNewProject: RequestHandler<{}, {}, Project> = async (
         githubUrl: githubUrl ?? "NULL",
         imageUrl: imageUrl ?? "NULL",
         videoUrl: videoUrl ?? "NULL",
-        targetTypeId: TARGET_TYPE_ID,
+        targetTypeId: TARGET_TYPE_ID_PROJECT,
         projectStatusId,
       },
     });

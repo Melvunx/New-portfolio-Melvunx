@@ -2,6 +2,7 @@ import { prisma } from "@/config/prisma";
 import colors from "@/schema/colors.schema";
 import apiReponse from "@/services/apiResponse";
 import generator from "@/services/generator.services";
+import isArrayOrIsEmpty from "@/utils/isArrayOrEmpty";
 import { Account } from "@prisma/client";
 
 import "@strategies/google-strategy";
@@ -174,15 +175,14 @@ export const passportLogout: RequestHandler = (req, res) => {
 
 export const userController: RequestHandler = async (req, res) => {
   try {
-    const user: Account | undefined = req.cookies.userCookie;
-    if (!user) {
-      apiReponse.error(
+    const user: Account = req.cookies.userCookie;
+
+    if (!user || user.roleId !== ADMIN_ID)
+      return apiReponse.error(
         res,
         "Unauthorized",
         new Error("User not found or session expired")
       );
-      return;
-    }
 
     const accounts = await prisma.account.findMany({
       include: {
@@ -191,7 +191,9 @@ export const userController: RequestHandler = async (req, res) => {
       },
     });
 
-    apiReponse.success(res, "Ok", accounts);
+    const isNotEmptyAccount = isArrayOrIsEmpty(accounts);
+
+    apiReponse.success(res, "Ok", isNotEmptyAccount ? accounts : null);
   } catch (error) {
     apiReponse.error(res, "Internal Server Error", error);
     return;

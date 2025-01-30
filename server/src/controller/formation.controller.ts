@@ -5,9 +5,9 @@ import { Account, Address, Formation } from "@prisma/client";
 
 import { RequestHandler } from "express";
 
-const { ADMIN_ID, TARGET_TYPE_ID } = process.env;
+const { ADMIN_ID, TARGET_TYPE_ID_FORMATION } = process.env;
 
-if (!ADMIN_ID || !TARGET_TYPE_ID) {
+if (!ADMIN_ID || !TARGET_TYPE_ID_FORMATION) {
   throw new Error("Ids not found");
 }
 
@@ -102,7 +102,7 @@ export const createNewFormation: RequestHandler<
         level,
         startDate,
         endDate,
-        targetTypeId: TARGET_TYPE_ID,
+        targetTypeId: TARGET_TYPE_ID_FORMATION,
         addressId: address.id,
       },
     });

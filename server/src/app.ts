@@ -81,7 +81,7 @@ app.use("/api/reaction", reactionRoutes);
 
 app.listen(PORT, () =>
   console.log(
-    colors.info(`Server running on port http://localhost:${Number(PORT)}`)
+    colors.info(`\nServer running on port http://localhost:${Number(PORT)}`)
   )
 );
 
