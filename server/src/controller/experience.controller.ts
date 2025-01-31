@@ -56,6 +56,63 @@ export const getExperienceId: RequestHandler<{ experienceId: string }> = async (
   }
 };
 
+export const searchedExperience: RequestHandler<
+  {},
+  {},
+  {},
+  { search: string }
+> = async (req, res) => {
+  try {
+    const { search } = req.query;
+
+    if (!search)
+      return apiReponse.error(
+        res,
+        "Not Found",
+        new Error("Search text not found")
+      );
+
+    const experiences = await prisma.experience.findMany({
+      include: {
+        address: true,
+      },
+
+      where: {
+        OR: [
+          {
+            title: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            tasks: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            skills: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+    });
+
+    const isNotEmptyExperience = isArrayOrIsEmpty(experiences);
+
+    return apiReponse.success(
+      res,
+      "Ok",
+      isNotEmptyExperience ? experiences : null
+    );
+  } catch (error) {
+    return apiReponse.error(res, "Internal Server Error", error);
+  }
+};
+
 export const createNewExperience: RequestHandler<
   {},
   {},

@@ -58,6 +58,73 @@ export const getProjectId: RequestHandler = async (req, res) => {
   }
 };
 
+export const searchedProject: RequestHandler<
+  {},
+  {},
+  {},
+  { search: string }
+> = async (req, res) => {
+  try {
+    const { search } = req.query;
+
+    if (!search)
+      return apiReponse.error(
+        res,
+        "Not Found",
+        new Error("Search text not found")
+      );
+
+    const projects = await prisma.project.findMany({
+      include: {
+        technologies: {
+          include: {
+            technology: {
+              include: {
+                category: true,
+              },
+            },
+          },
+        },
+      },
+
+      where: {
+        OR: [
+          {
+            title: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            description: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            technologies: {
+              some: {
+                technology: {
+                  name: {
+                    contains: search,
+                    mode: "insensitive",
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    const isNotEmptyProject = isArrayOrIsEmpty(projects);
+
+    return apiReponse.success(res, "Ok", isNotEmptyProject ? projects : null);
+  } catch (error) {
+    return apiReponse.error(res, "Internal Server Error", error);
+  }
+};
+
 export const createNewProject: RequestHandler<{}, {}, Project> = async (
   req,
   res

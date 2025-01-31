@@ -4,6 +4,7 @@ import {
   deleteExperience,
   getExperienceId,
   getExperiences,
+  searchedExperience,
   updateExperience,
 } from "@controller/experience.controller";
 import {
@@ -17,6 +18,8 @@ const router = Router();
 router.get("/", getExperiences);
 
 router.get("/:experienceId", getExperienceId);
+
+router.get("/searched/", searchedExperience);
 
 // Post
 router.post(

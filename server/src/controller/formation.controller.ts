@@ -52,6 +52,63 @@ export const getFormationId: RequestHandler<{ formationId: string }> = async (
   }
 };
 
+export const searchedFormation: RequestHandler<
+  {},
+  {},
+  {},
+  { search: string }
+> = async (req, res) => {
+  try {
+    const { search } = req.query;
+
+    if (!search)
+      return apiReponse.error(
+        res,
+        "Not Found",
+        new Error("Search text not found")
+      );
+
+    const formations = await prisma.formation.findMany({
+      include: {
+        address: true,
+      },
+
+      where: {
+        OR: [
+          {
+            title: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            description: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            level: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+    });
+
+    const isNotEmptyFormation = isArrayOrIsEmpty(formations);
+
+    return apiReponse.success(
+      res,
+      "Ok",
+      isNotEmptyFormation ? formations : null
+    );
+  } catch (error) {
+    return apiReponse.error(res, "Internal Server Error", error);
+  }
+};
+
 export const createNewFormation: RequestHandler<
   {},
   {},
