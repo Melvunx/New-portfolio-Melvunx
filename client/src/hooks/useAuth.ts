@@ -1,7 +1,7 @@
 import { fetchApi } from "@/api/api";
 import { useAccountStore } from "@/api/store";
-import { Account } from "@server/schema/account.schema";
 import { useCallback } from "react";
+import { Account } from "C:/Users/Melvunx/Web/New portfolio/server/node_modules/.pnpm/@prisma+client@6.2.1_prisma@6.2.1/node_modules/@prisma/client/default";
 
 export enum authStatus {
   Unknown = 0,

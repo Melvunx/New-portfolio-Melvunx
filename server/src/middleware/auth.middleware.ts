@@ -14,7 +14,8 @@ const checkAuthentication: RequestHandler = (req, res, next) => {
 
   if (!user)
     return apiReponse.error(res, "Not Found", new Error("User not found"));
-  else if (!req.isAuthenticated())
+
+  if (!req.isAuthenticated())
     return apiReponse.error(
       res,
       "Unauthorized",
@@ -29,10 +30,10 @@ const roleBasedAuthentication = (allowedRoles: string[]): RequestHandler => {
   return (req, res, next) => {
     const user: Account = req.cookies.userCookie;
 
-    if (!user) {
-      apiReponse.error(res, "Not Found", new Error("User not found"));
-      return;
-    } else if (!allowedRoles.includes(user.roleId))
+    if (!user)
+      return apiReponse.error(res, "Not Found", new Error("User not found"));
+
+    if (!allowedRoles.includes(user.roleId))
       return apiReponse.error(
         res,
         "Unauthorized",

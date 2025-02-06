@@ -1,8 +1,10 @@
 import {
+  emailVerification,
   googleLogin,
   passportLogin,
   passportLogout,
   register,
+  resetPassword,
   userController,
 } from "@controller/auth.controller";
 import {
@@ -15,7 +17,11 @@ const router = Router();
 
 router.post("/register", register);
 
+router.get("/verify-email", emailVerification);
+
 router.post("/login", passportLogin);
+
+router.post("/reset-password", resetPassword)
 
 router.get("/google", passport.authenticate("google"));
 

@@ -1,3 +1,4 @@
+import { verifyToken } from "@/config/jsonwebtoken";
 import { prisma } from "@/config/prisma";
 import colors from "@/schema/colors.schema";
 import apiReponse from "@/services/apiResponse";
@@ -118,6 +119,42 @@ export const register: RequestHandler<{}, {}, Account> = async (req, res) => {
   }
 };
 
+export const emailVerification: RequestHandler<
+  {},
+  {},
+  {},
+  { token: string }
+> = async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token)
+      return apiReponse.error(res, "Not Found", new Error("Token not found"));
+
+    const decoded = await verifyToken<{ email: string }>(token);
+
+    if (!decoded)
+      return apiReponse.error(res, "Bad Request", new Error("Decoded error"));
+
+    await prisma.account.update({
+      where: { email: decoded.email },
+
+      data: {
+        verified: true,
+      },
+    });
+
+    return apiReponse.success(
+      res,
+      "Ok",
+      null,
+      `Email ${decoded.email} verified successfully`
+    );
+  } catch (error) {
+    return apiReponse.error(res, "Internal Server Error", error);
+  }
+};
+
 export const passportLogin: RequestHandler = (req, res, next) => {
   passport.authenticate(
     "local",
@@ -141,6 +178,39 @@ export const passportLogin: RequestHandler = (req, res, next) => {
       });
     }
   )(req, res, next);
+};
+
+export const resetPassword: RequestHandler<
+  {},
+  {},
+  { token: string; newPass: string }
+> = async (req, res) => {
+  try {
+    const { token, newPass } = req.body;
+
+    if (!token || !newPass)
+      return apiReponse.error(
+        res,
+        "Not Found",
+        new Error("Token or password not found")
+      );
+
+    const decoded = await verifyToken<{ email: string }>(token);
+
+    if (!decoded)
+      return apiReponse.error(res, "Bad Request", new Error("Decoded error"));
+
+    const hashedPassword = await generator.generateHashedPassword(newPass);
+
+    await prisma.account.update({
+      where: { email: decoded.email },
+      data: { password: hashedPassword },
+    });
+
+    return apiReponse.success(res, "Ok", null, "Password reset successfully");
+  } catch (error) {
+    return apiReponse.error(res, "Internal Server Error", error);
+  }
 };
 
 export const passportLogout: RequestHandler = (req, res) => {
